@@ -23,6 +23,12 @@
 </template>
 
 <script setup>
+// Configuração da página
+definePageMeta({
+  middleware: 'guest',
+  layout: false // Usar layout customizado para esta página
+})
+
 // Import explícito do componente
 import LoginForm from "~/components/LoginForm.vue";
 
@@ -35,10 +41,5 @@ useHead({
       content: "Faça login ou crie sua conta no Sistema de Portaria",
     },
   ],
-});
-
-// Definir layout específico se necessário (opcional)
-definePageMeta({
-  layout: false, // Usar layout customizado para esta página
 });
 </script>
