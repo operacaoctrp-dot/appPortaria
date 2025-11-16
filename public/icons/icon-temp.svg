@@ -1,0 +1,25 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo -->
+  <rect width="192" height="192" fill="#3B82F6"/>
+  
+  <!-- Ícone de prédio/portaria -->
+  <g transform="translate(48, 48)">
+    <!-- Base do prédio -->
+    <rect x="20" y="60" width="56" height="36" fill="white" stroke="white" stroke-width="2"/>
+    
+    <!-- Topo do prédio -->
+    <rect x="16" y="40" width="64" height="20" fill="white"/>
+    
+    <!-- Porta -->
+    <rect x="38" y="76" width="20" height="20" fill="#3B82F6"/>
+    
+    <!-- Janelas -->
+    <rect x="24" y="48" width="8" height="8" fill="#3B82F6"/>
+    <rect x="36" y="48" width="8" height="8" fill="#3B82F6"/>
+    <rect x="52" y="48" width="8" height="8" fill="#3B82F6"/>
+    <rect x="64" y="48" width="8" height="8" fill="#3B82F6"/>
+    
+    <!-- Texto -->
+    <text x="48" y="120" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">PORTARIA</text>
+  </g>
+</svg>

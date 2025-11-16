@@ -1,5 +1,7 @@
 import type { User, AuthError } from "@supabase/supabase-js";
-import { ref, onMounted, type Ref } from "vue";
+import { ref, type Ref } from "vue";
+import { logger } from "~/utils/logger";
+import { handleAuthError } from "~/utils/errorHandler";
 
 export const useAuth = (): {
   user: Ref<User | null>;
@@ -8,16 +10,22 @@ export const useAuth = (): {
     email: string,
     password: string
   ) => Promise<{ error: AuthError | null }>;
+  register: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null; data: any }>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
   getUser: () => Promise<void>;
 } => {
   const supabase = useSupabaseClient();
 
   // Estado global da autenticação
   const user = useState<User | null>("auth.user", () => null);
-  const loading = useState<boolean>("auth.loading", () => true);
+  const loading = useState<boolean>("auth.loading", () => false);
 
-  console.log(
+  logger.debug(
     "🔄 useAuth chamado - user:",
     user.value ? "Logado" : "Não logado",
     "loading:",
@@ -35,19 +43,54 @@ export const useAuth = (): {
       });
 
       if (error) {
-        console.error("Erro no login:", error);
+        const appError = handleAuthError(error, "useAuth.login");
+        logger.error("❌ Erro no login:", appError?.userMessage);
         return { error };
       }
 
       if (data.user) {
         user.value = data.user;
-        console.log("Login realizado com sucesso!");
+        logger.success("Login realizado com sucesso");
       }
 
       return { error: null };
-    } catch (error) {
-      console.error("Erro inesperado no login:", error);
+    } catch (error: any) {
+      const appError = handleAuthError(error as AuthError, "useAuth.login");
+      logger.error("❌ Erro inesperado no login:", appError?.userMessage);
       return { error: error as AuthError };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Função de registro
+  const register = async (email: string, password: string) => {
+    loading.value = true;
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/confirm`,
+          data: {
+            email_confirmed: false,
+          },
+        },
+      });
+
+      if (error) {
+        const appError = handleAuthError(error, "useAuth.register");
+        logger.error("Erro no registro:", appError?.userMessage);
+        return { error, data: null };
+      }
+
+      logger.success("Registro realizado com sucesso! Verifique seu email.");
+      return { error: null, data };
+    } catch (error) {
+      const appError = handleAuthError(error as AuthError, "useAuth.register");
+      logger.error("Erro inesperado no registro:", appError?.userMessage);
+      return { error: error as AuthError, data: null };
     } finally {
       loading.value = false;
     }
@@ -58,16 +101,91 @@ export const useAuth = (): {
     loading.value = true;
 
     try {
+      logger.info("🚪 Executando logout no Supabase...");
+
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error("Erro no logout:", error);
+        const appError = handleAuthError(error, "useAuth.logout");
+        logger.error("❌ Erro no logout:", appError?.userMessage);
+        throw error;
       }
 
+      // Limpar o estado do usuário
       user.value = null;
-      console.log("Logout realizado com sucesso!");
+
+      // Limpar estados globais
+      useState("auth.user", () => null);
+      useState("auth.loading", () => false);
+
+      logger.success("Logout realizado com sucesso");
     } catch (error) {
-      console.error("Erro inesperado no logout:", error);
+      const appError = handleAuthError(error as AuthError, "useAuth.logout");
+      logger.error("❌ Erro inesperado no logout:", appError?.userMessage);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Função para solicitar recuperação de senha
+  const resetPassword = async (email: string) => {
+    loading.value = true;
+
+    try {
+      const redirectUrl = `${window.location.origin}/redefinir-senha`;
+      logger.info("🔄 Solicitando recuperação de senha...");
+      logger.debug("📧 Email:", email);
+      logger.debug("🔗 Redirect URL:", redirectUrl);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        const appError = handleAuthError(error, "useAuth.resetPassword");
+        logger.error(
+          "❌ Erro ao solicitar recuperação:",
+          appError?.userMessage
+        );
+        return { error };
+      }
+
+      logger.success("Email de recuperação enviado com sucesso");
+      return { error: null };
+    } catch (error: any) {
+      console.error(
+        "❌ Erro inesperado na recuperação:",
+        error.message || error
+      );
+      return { error: error as AuthError };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Função para atualizar senha (após clicar no link do email)
+  const updatePassword = async (newPassword: string) => {
+    loading.value = true;
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error("❌ Erro ao atualizar senha:", error.message);
+        return { error };
+      }
+
+      console.log("✅ Senha atualizada com sucesso!");
+      return { error: null };
+    } catch (error: any) {
+      console.error(
+        "❌ Erro inesperado ao atualizar senha:",
+        error.message || error
+      );
+      return { error: error as AuthError };
     } finally {
       loading.value = false;
     }
@@ -90,29 +208,17 @@ export const useAuth = (): {
     }
   };
 
-  // Monitorar mudanças no estado de autenticação
-  onMounted(() => {
-    supabase.auth.onAuthStateChange((event: any, session: any) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        user.value = session.user;
-        console.log("Usuário logado via auth state change");
-      } else if (event === "SIGNED_OUT") {
-        user.value = null;
-        console.log("Usuário deslogado via auth state change");
-      }
-    });
-
-    // Obter usuário inicial apenas no cliente
-    if (process.client) {
-      getUser();
-    }
-  });
+  // Monitorar mudanças no estado de autenticação (apenas no cliente)
+  // Isso foi movido para o plugin auth-init.client.ts
 
   return {
     user,
     loading,
     login,
+    register,
     logout,
+    resetPassword,
+    updatePassword,
     getUser,
   };
 };

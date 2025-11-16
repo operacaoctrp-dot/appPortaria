@@ -61,7 +61,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
+
+// Slots
+const slots = useSlots()
 
 // Props
 const props = defineProps({
@@ -191,10 +194,10 @@ const inputClasses = computed(() => {
   }
 
   // Add prefix/suffix padding
-  if (props.prefixIcon || this?.$slots?.prefix) {
+  if (props.prefixIcon || slots.prefix) {
     baseClasses.push('pl-10')
   }
-  if (props.suffixIcon || this?.$slots?.suffix) {
+  if (props.suffixIcon || slots.suffix) {
     baseClasses.push('pr-10')
   }
 

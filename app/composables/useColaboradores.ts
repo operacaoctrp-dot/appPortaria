@@ -3,6 +3,8 @@ import type {
   ColaboradorInput,
   ColaboradorFilter,
 } from "~/types/colaborador";
+import { logger } from "~/utils/logger";
+import { handleDatabaseError } from "~/utils/errorHandler";
 
 export const useColaboradores = () => {
   const supabase = useSupabaseClient();
@@ -10,19 +12,19 @@ export const useColaboradores = () => {
   // Teste de conectividade
   const testarConexao = async () => {
     try {
-      console.log("🧪 Testando conexão com Supabase...");
+      logger.debug("🧪 Testando conexão com Supabase...");
 
       // Teste simples de conectividade
       const { data, error } = await supabase
         .from("colaboradores")
         .select("count", { count: "exact", head: true });
 
-      console.log("🧪 Teste de conectividade - Data:", data);
-      console.log("🧪 Teste de conectividade - Error:", error);
+      logger.debug("🧪 Teste de conectividade - Data:", data);
+      logger.debug("🧪 Teste de conectividade - Error:", error);
 
       return { success: !error, error };
     } catch (err) {
-      console.error("🧪 Erro no teste de conectividade:", err);
+      logger.error("🧪 Erro no teste de conectividade:", err);
       return { success: false, error: err };
     }
   };
@@ -37,18 +39,7 @@ export const useColaboradores = () => {
    */
   const buscarColaboradores = async (filtros?: ColaboradorFilter) => {
     try {
-      console.log("🔍 Iniciando busca de colaboradores...");
-
-      // Debug das configurações
-      const config = useRuntimeConfig();
-      console.log("🔧 Supabase URL:", config.public.supabaseUrl);
-      console.log(
-        "🔑 Supabase Key:",
-        config.public.supabaseKey
-          ? `${config.public.supabaseKey.substring(0, 20)}...`
-          : "VAZIO"
-      );
-      console.log("📱 Supabase Client:", !!supabase);
+      logger.info("🔍 Iniciando busca de colaboradores...");
 
       // Testar conexão primeiro
       await testarConexao();
@@ -63,7 +54,7 @@ export const useColaboradores = () => {
 
       // Aplicar filtros se fornecidos
       if (filtros) {
-        console.log("🔎 Aplicando filtros:", filtros);
+        logger.debug("🔎 Aplicando filtros:", filtros);
         if (filtros.matricula) {
           query = query.eq("matricula", filtros.matricula);
         }
@@ -78,27 +69,30 @@ export const useColaboradores = () => {
         }
       }
 
-      console.log("📡 Fazendo requisição para Supabase...");
-      const { data, error: supabaseError, status, statusText } = await query;
-
-      console.log("📊 Dados recebidos:", data);
-      console.log("❌ Erro Supabase:", supabaseError);
-      console.log("📈 Status:", status);
-      console.log("📝 Status Text:", statusText);
-      console.log("🔢 Quantidade de registros:", data?.length || 0);
+      logger.debug("📡 Fazendo requisição para Supabase...");
+      const { data, error: supabaseError } = await query;
 
       if (supabaseError) {
-        throw new Error(supabaseError.message);
+        const appError = handleDatabaseError(
+          supabaseError,
+          "useColaboradores.buscarColaboradores"
+        );
+        error.value = appError.userMessage;
+        throw new Error(appError.userMessage);
       }
 
       colaboradores.value = data || [];
-      console.log("✅ Colaboradores carregados:", colaboradores.value.length);
+      logger.success(
+        "Colaboradores carregados",
+        `${colaboradores.value.length} registros`
+      );
       return data || [];
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao buscar colaboradores";
-      error.value = errorMessage;
-      console.error("💥 Erro ao buscar colaboradores:", err);
+      const appError = handleDatabaseError(
+        err,
+        "useColaboradores.buscarColaboradores"
+      );
+      error.value = appError.userMessage;
       throw err;
     } finally {
       loading.value = false;
@@ -120,15 +114,21 @@ export const useColaboradores = () => {
         .single();
 
       if (supabaseError) {
-        throw new Error(supabaseError.message);
+        const appError = handleDatabaseError(
+          supabaseError,
+          "useColaboradores.buscarColaboradorPorId"
+        );
+        error.value = appError.userMessage;
+        throw new Error(appError.userMessage);
       }
 
       return data;
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro ao buscar colaborador";
-      error.value = errorMessage;
-      console.error("Erro ao buscar colaborador por ID:", err);
+      const appError = handleDatabaseError(
+        err,
+        "useColaboradores.buscarColaboradorPorId"
+      );
+      error.value = appError.userMessage;
       throw err;
     } finally {
       loading.value = false;

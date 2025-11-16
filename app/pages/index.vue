@@ -165,6 +165,46 @@
         </div>
       </div>
 
+      <!-- Dashboard Analytics -->
+      <div class="mt-10 grid md:grid-cols-2 gap-6">
+        <!-- Gráfico de Movimentação -->
+        <ChartCard
+          title="Movimentação de Hoje"
+          type="line"
+          :data="chartData"
+          :summary-stats="chartSummary"
+          @refresh="handleChartRefresh"
+          @periodChange="handlePeriodChange"
+        />
+
+        <!-- Cards de Estatísticas -->
+        <div
+          v-if="chartSummary && chartSummary.length > 0"
+          class="grid grid-cols-2 gap-4"
+        >
+          <StatCard
+            v-for="stat in chartSummary"
+            :key="stat.label"
+            :title="stat.label"
+            :value="stat.value"
+            :icon="
+              stat.label === 'Entradas'
+                ? 'arrow-up'
+                : stat.label === 'Saídas'
+                ? 'arrow-down'
+                : 'chart'
+            "
+            :color="
+              stat.label === 'Entradas'
+                ? 'success'
+                : stat.label === 'Saídas'
+                ? 'warning'
+                : 'primary'
+            "
+          />
+        </div>
+      </div>
+
       <!-- Lista de Funcionários Presentes -->
       <div
         class="mt-10 bg-white rounded-2xl shadow-medium p-8 border border-neutral-100"
@@ -256,20 +296,43 @@
               <DocumentTextIcon class="h-7 w-7 mr-3" />
               Centro de Controle
             </h3>
-            <div class="flex space-x-2">
-              <button
-                v-for="(aba, index) in abasHistorico"
-                :key="index"
-                @click="abaAtiva = index"
-                :class="[
-                  'px-4 py-2 rounded-lg font-medium transition-all duration-200',
-                  abaAtiva === index
-                    ? 'bg-white text-primary-600 shadow-md'
-                    : 'text-primary-100 hover:text-white hover:bg-primary-400',
-                ]"
+            <div class="flex items-center space-x-4">
+              <!-- Seletor de Data -->
+              <div
+                class="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2"
               >
-                {{ aba.nome }}
-              </button>
+                <ClockIcon class="h-5 w-5 text-white" />
+                <input
+                  type="date"
+                  v-model="dataSelecionada"
+                  class="bg-transparent text-white font-medium border-none focus:outline-none focus:ring-0 cursor-pointer"
+                  :max="new Date().toISOString().split('T')[0]"
+                />
+                <span
+                  v-if="
+                    dataSelecionada === new Date().toISOString().split('T')[0]
+                  "
+                  class="bg-success-500 text-white text-xs px-2 py-1 rounded-full font-semibold"
+                >
+                  HOJE
+                </span>
+              </div>
+
+              <div class="flex space-x-2">
+                <button
+                  v-for="(aba, index) in abasHistorico"
+                  :key="index"
+                  @click="abaAtiva = index"
+                  :class="[
+                    'px-4 py-2 rounded-lg font-medium transition-all duration-200',
+                    abaAtiva === index
+                      ? 'bg-white text-primary-600 shadow-md'
+                      : 'text-primary-100 hover:text-white hover:bg-primary-400',
+                  ]"
+                >
+                  {{ aba.nome }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -294,6 +357,44 @@
                 {{ tempoMedioPresenca }}
               </div>
               <div class="text-primary-100 text-sm">Tempo Médio</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conteúdo do painel: gráfico + filtros -->
+        <div class="p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Gráfico principal ocupa 2 colunas em telas grandes -->
+            <div class="lg:col-span-2">
+              <ChartCard
+                :title="'Entradas x Saídas'"
+                type="line"
+                :data="chartData"
+                @refresh="handleChartRefresh"
+                @periodChange="handlePeriodChange"
+              />
+            </div>
+
+            <!-- Painel lateral com estatísticas rápidas -->
+            <div class="lg:col-span-1">
+              <div class="bg-white rounded-xl p-4 border border-neutral-100">
+                <h4 class="text-md font-semibold mb-3">Resumo</h4>
+                <div
+                  v-if="chartSummary && chartSummary.length > 0"
+                  class="space-y-3"
+                >
+                  <div
+                    v-for="s in chartSummary"
+                    :key="s.label"
+                    class="flex items-center justify-between"
+                  >
+                    <span class="text-sm text-neutral-600">{{ s.label }}</span>
+                    <span class="font-bold text-lg text-neutral-800">{{
+                      s.value
+                    }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -716,42 +817,9 @@
 </template>
 
 <script setup>
-// Aplicar middleware de autenticação
-definePageMeta({
-  middleware: "auth",
-});
-
-// Composable de autenticação
-const { user, logout } = useAuth();
-
-// Composable para gerenciar colaboradores
-const {
-  colaboradores,
-  buscarColaboradores,
-  registrarEntrada: registrarEntradaComposable,
-  registrarSaida: registrarSaidaComposable,
-  loading: loadingColaboradores,
-} = useColaboradores();
-
-// Funções de autenticação
-const handleLogout = async () => {
-  await logout();
-  // Redirecionar para a página de login após logout
-  await navigateTo("/login");
-};
-
-// Meta tags para SEO
-useHead({
-  title: "Sistema de Portaria - Controle de Acesso",
-  meta: [
-    {
-      name: "description",
-      content: "Sistema para controle de entrada e saída de funcionários",
-    },
-  ],
-});
-
-import { ref, computed } from "vue";
+// Imports devem vir primeiro
+import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { storeToRefs } from "pinia";
 import {
   Listbox,
   ListboxButton,
@@ -773,9 +841,75 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/vue/24/outline";
 
-// Imports explícitos dos componentes
-import BaseButton from "~/components/BaseButton.vue";
-import BaseInput from "~/components/BaseInput.vue";
+// Importar componentes base
+import BaseInput from "~/components/common/BaseInput.vue";
+import BaseButton from "~/components/common/BaseButton.vue";
+
+// Aplicar middleware de autenticação
+definePageMeta({
+  middleware: "auth",
+});
+
+// Composable de autenticação
+const { user, logout } = useAuth();
+
+// Composable para gerenciar colaboradores
+const {
+  colaboradores,
+  buscarColaboradores,
+  loading: loadingColaboradores,
+} = useColaboradores();
+
+// Novo composable de histórico de movimentação
+const {
+  registrarMovimentacao,
+  buscarMovimentacoesDia,
+  buscarResumoColaboradoresDia,
+  loading: loadingHistorico,
+  error: errorHistorico,
+} = useHistoricoMovimentacao();
+
+// Funções de autenticação
+const handleLogout = async () => {
+  await logout();
+  // Redirecionar para a página de login após logout
+  await navigateTo("/login");
+};
+
+// Meta tags para SEO
+useHead({
+  title: "Sistema de Portaria - Controle de Acesso",
+  meta: [
+    {
+      name: "description",
+      content: "Sistema para controle de entrada e saída de funcionários",
+    },
+  ],
+});
+
+// Store de analytics
+const analyticsStore = useAnalyticsStore();
+const { summary, current } = storeToRefs(analyticsStore);
+
+// Computed para garantir que summary está disponível
+const chartSummary = computed(() => {
+  return summary.value ?? [];
+});
+
+const chartData = computed(() => {
+  return current.value ?? { labels: [], datasets: [] };
+});
+
+// Funções do Dashboard
+const handleChartRefresh = (period) => {
+  console.log("Atualizando gráfico:", period);
+  analyticsStore?.updatePeriod(period);
+};
+
+const handlePeriodChange = (period) => {
+  console.log("Mudando período:", period);
+  analyticsStore?.updatePeriod(period);
+};
 
 // Estados reativos
 const entradaForm = ref({
@@ -787,61 +921,16 @@ const saidaForm = ref({
   funcionarioId: "",
 });
 
+// Estado para data selecionada (para visualizar histórico)
+const dataSelecionada = ref(new Date().toISOString().split("T")[0]);
+const movimentacoesDia = ref([]);
+const resumoDia = ref([]);
+
 const historico = computed(() => {
-  const registros = [];
-
-  colaboradores.value.forEach((colaborador) => {
-    // Processar entradas e saídas de cada colaborador
-    for (let i = 1; i <= 5; i++) {
-      const entrada = colaborador[`ent${i}`];
-      const saida = colaborador[`sai${i}`];
-
-      // Adicionar entrada se existir
-      if (entrada) {
-        registros.push({
-          id: `${colaborador.id}-ent${i}`,
-          nome: colaborador.nome || "Sem nome",
-          cargo: colaborador.funcao || "Não informado",
-          tipo: "entrada",
-          hora: new Date(entrada),
-          colaboradorId: colaborador.id,
-          slot: i,
-        });
-      }
-
-      // Adicionar saída se existir
-      if (saida) {
-        registros.push({
-          id: `${colaborador.id}-sai${i}`,
-          nome: colaborador.nome || "Sem nome",
-          cargo: colaborador.funcao || "Não informado",
-          tipo: "saida",
-          hora: new Date(saida),
-          colaboradorId: colaborador.id,
-          slot: i,
-        });
-      }
-    }
-  });
-
-  // Filtrar apenas registros de hoje
-  const hoje = new Date();
-  const inicioHoje = new Date(
-    hoje.getFullYear(),
-    hoje.getMonth(),
-    hoje.getDate()
-  );
-  const fimHoje = new Date(
-    hoje.getFullYear(),
-    hoje.getMonth(),
-    hoje.getDate() + 1
-  );
-
-  return registros
-    .filter(
-      (registro) => registro.hora >= inicioHoje && registro.hora < fimHoje
-    )
-    .sort((a, b) => new Date(b.hora) - new Date(a.hora)); // Mais recente primeiro
+  // Usar movimentacoesDia que vem do composable
+  return movimentacoesDia.value.sort(
+    (a, b) => new Date(b.hora) - new Date(a.hora)
+  ); // Mais recente primeiro
 });
 
 // Estados para o dashboard
@@ -1040,16 +1129,35 @@ const registrarEntrada = async () => {
     const nome = entradaForm.value.nome.trim();
     const cargo = entradaForm.value.cargo.trim();
 
-    await registrarEntradaComposable(nome, cargo);
+    // Primeiro, buscar ou criar colaborador
+    let colaborador = colaboradores.value.find(
+      (c) => c.nome?.toLowerCase() === nome.toLowerCase()
+    );
 
-    // Limpar formulário
-    entradaForm.value = { nome: "", cargo: "" };
+    if (!colaborador) {
+      // Se não existe, criar novo colaborador via useColaboradores
+      console.log(
+        "Colaborador não encontrado, seria necessário criar primeiro"
+      );
+      alert("Colaborador não encontrado. Por favor, cadastre primeiro.");
+      return;
+    }
 
-    // Feedback visual
-    alert(`Entrada registrada para ${nome}`);
+    // Registrar movimentação usando o novo composable
+    const resultado = await registrarMovimentacao(colaborador.id, "entrada");
+
+    if (resultado.success) {
+      // Limpar formulário
+      entradaForm.value = { nome: "", cargo: "" };
+
+      console.log(`✅ Entrada registrada para ${nome}`);
+
+      // Os dados serão atualizados automaticamente pelo watch da data
+    } else {
+      console.error(`❌ Erro: ${resultado.error}`);
+    }
   } catch (err) {
     console.error("Erro ao registrar entrada:", err);
-    alert(`Erro ao registrar entrada: ${err.message}`);
   }
 };
 
@@ -1062,16 +1170,21 @@ const registrarSaida = async () => {
   if (!funcionario) return;
 
   try {
-    await registrarSaidaComposable(funcionarioId);
+    // Registrar saída usando o novo composable
+    const resultado = await registrarMovimentacao(funcionarioId, "saida");
 
-    // Limpar seleção
-    saidaForm.value.funcionarioId = "";
+    if (resultado.success) {
+      // Limpar seleção
+      saidaForm.value.funcionarioId = "";
 
-    // Feedback visual
-    alert(`Saída registrada para ${funcionario.nome}`);
+      console.log(`✅ Saída registrada para ${funcionario.nome}`);
+
+      // Os dados serão atualizados automaticamente pelo watch da data
+    } else {
+      console.error(`❌ Erro: ${resultado.error}`);
+    }
   } catch (err) {
     console.error("Erro ao registrar saída:", err);
-    alert(`Erro ao registrar saída: ${err.message}`);
   }
 };
 
@@ -1115,23 +1228,50 @@ const formatarHora = (data) => {
   }
 };
 
+// Função para carregar movimentações do dia selecionado
+const carregarMovimentacoesDia = async () => {
+  try {
+    console.log("📅 Carregando movimentações do dia:", dataSelecionada.value);
+
+    movimentacoesDia.value = await buscarMovimentacoesDia(
+      dataSelecionada.value
+    );
+
+    console.log(
+      "✅ Movimentações carregadas:",
+      movimentacoesDia.value?.length || 0
+    );
+
+    resumoDia.value = await buscarResumoColaboradoresDia(dataSelecionada.value);
+
+    console.log("✅ Resumo carregado:", resumoDia.value?.length || 0);
+  } catch (err) {
+    console.error("❌ Erro ao carregar movimentações:", err);
+    // Inicializar arrays vazios em caso de erro
+    movimentacoesDia.value = [];
+    resumoDia.value = [];
+  }
+};
+
+// Atualizar quando mudar a data
+watch(dataSelecionada, async () => {
+  await carregarMovimentacoesDia();
+});
+
 // Carregar dados na inicialização
 onMounted(async () => {
   try {
+    console.log("🚀 Iniciando carregamento de dados...");
     await buscarColaboradores();
-  } catch (err) {
-    console.error("Erro ao carregar colaboradores:", err);
-  }
-});
+    console.log("✅ Colaboradores carregados");
 
-// Meta tags para SEO
-useHead({
-  title: "Sistema de Portaria - Controle de Acesso",
-  meta: [
-    {
-      name: "description",
-      content: "Sistema para controle de entrada e saída de funcionários",
-    },
-  ],
+    // Aguardar um pouco para garantir que tudo está pronto
+    await nextTick();
+    await carregarMovimentacoesDia();
+    console.log("✅ Dados iniciais carregados com sucesso");
+  } catch (err) {
+    console.error("❌ Erro ao carregar dados iniciais:", err);
+    // Não mostrar erro ao usuário, apenas log
+  }
 });
 </script>

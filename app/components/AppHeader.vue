@@ -34,12 +34,19 @@
           </NuxtLink>
 
           <button
-            class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-primary-500/30"
+            @click="handleLogout"
+            class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-red-500/30 text-red-100"
           >
-            <UserCircleIcon class="h-5 w-5" />
-            <span class="font-medium">Perfil</span>
+            <ArrowRightOnRectangleIcon class="h-5 w-5" />
+            <span class="font-medium">Sair</span>
           </button>
         </nav>
+
+        <!-- PWA Install + Theme Toggle -->
+        <div class="hidden md:flex items-center space-x-3">
+          <PWAInstall />
+          <ThemeToggle />
+        </div>
 
         <!-- Menu Mobile -->
         <button
@@ -86,11 +93,22 @@
             </NuxtLink>
 
             <button
-              class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-primary-500/30 w-full text-left"
+              @click="handleLogout"
+              class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-red-500/30 text-red-100 w-full text-left"
             >
-              <UserCircleIcon class="h-5 w-5" />
-              <span class="font-medium">Perfil</span>
+              <ArrowRightOnRectangleIcon class="h-5 w-5" />
+              <span class="font-medium">Sair</span>
             </button>
+
+            <!-- PWA e Theme Toggle no Mobile -->
+            <div class="border-t border-primary-500/30 pt-3 mt-3 space-y-3">
+              <div class="px-4">
+                <PWAInstall />
+              </div>
+              <div class="px-4">
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
         </nav>
       </Transition>
@@ -107,14 +125,42 @@ import {
   UserCircleIcon,
   Bars3Icon,
   XMarkIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
 
 // Estado do menu mobile
 const isMobileMenuOpen = ref(false);
 
+// Auth
+const { logout } = useAuth();
+const router = useRouter();
+
 // Função para alternar menu mobile
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+// Função de logout
+const handleLogout = async () => {
+  console.log("🚪 Iniciando logout...");
+
+  try {
+    // Fechar menu mobile se estiver aberto
+    isMobileMenuOpen.value = false;
+
+    // Fazer logout
+    await logout();
+
+    console.log("✅ Logout realizado, redirecionando para login...");
+
+    // Redirecionar para login
+    await router.push("/login");
+
+    // Recarregar a página para limpar estado
+    window.location.reload();
+  } catch (error) {
+    console.error("❌ Erro no logout:", error);
+  }
 };
 
 // Fechar menu mobile quando a rota mudar

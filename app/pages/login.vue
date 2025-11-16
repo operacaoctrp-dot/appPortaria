@@ -16,7 +16,7 @@
 
       <!-- Login Form Container -->
       <div class="relative z-10 w-full max-w-md">
-        <LoginForm />
+        <FormsLoginForm />
       </div>
     </div>
   </div>
@@ -25,12 +25,9 @@
 <script setup>
 // Configuração da página
 definePageMeta({
-  middleware: 'guest',
-  layout: false // Usar layout customizado para esta página
-})
-
-// Import explícito do componente
-import LoginForm from "~/components/LoginForm.vue";
+  middleware: "guest",
+  layout: false, // Usar layout customizado para esta página
+});
 
 // Meta tags para SEO
 useHead({

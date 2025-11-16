@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo com gradiente -->
+  <defs>
+    <linearGradient id="background" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Fundo -->
+  <rect width="512" height="512" fill="url(#background)" rx="80" ry="80"/>
+  
+  <!-- Prédio principal -->
+  <g transform="translate(106, 80)" filter="url(#shadow)">
+    <!-- Base do prédio -->
+    <rect x="40" y="160" width="200" height="200" fill="#FFFFFF" stroke="none"/>
+    
+    <!-- Topo do prédio -->
+    <rect x="20" y="120" width="240" height="40" fill="#FFFFFF"/>
+    
+    <!-- Entrada principal -->
+    <rect x="110" y="240" width="80" height="120" fill="#3B82F6"/>
+    
+    <!-- Janelas lado esquerdo -->
+    <rect x="50" y="140" width="30" height="30" fill="#3B82F6"/>
+    <rect x="90" y="140" width="30" height="30" fill="#3B82F6"/>
+    
+    <!-- Janelas lado direito -->
+    <rect x="180" y="140" width="30" height="30" fill="#3B82F6"/>
+    <rect x="220" y="140" width="30" height="30" fill="#3B82F6"/>
+    
+    <!-- Janelas andar superior -->
+    <rect x="50" y="180" width="30" height="30" fill="#3B82F6"/>
+    <rect x="90" y="180" width="30" height="30" fill="#3B82F6"/>
+    <rect x="180" y="180" width="30" height="30" fill="#3B82F6"/>
+    <rect x="220" y="180" width="30" height="30" fill="#3B82F6"/>
+    
+    <!-- Placa de identificação -->
+    <rect x="30" y="80" width="240" height="30" fill="#FFFFFF" rx="5"/>
+    <text x="150" y="100" text-anchor="middle" fill="#1E40AF" font-family="Arial, sans-serif" font-size="20" font-weight="bold">PORTARIA</text>
+  </g>
+  
+  <!-- Detalhes decorativos -->
+  <circle cx="100" cy="100" r="8" fill="#FFFFFF" opacity="0.3"/>
+  <circle cx="412" cy="100" r="6" fill="#FFFFFF" opacity="0.2"/>
+  <circle cx="80" cy="400" r="4" fill="#FFFFFF" opacity="0.25"/>
+  <circle cx="432" cy="420" r="5" fill="#FFFFFF" opacity="0.2"/>
+</svg>

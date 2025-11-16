@@ -1,16 +1,24 @@
-export default defineNuxtRouteMiddleware((to) => {
-  console.log('🛡️ Middleware auth executado para:', to.path)
-  
+export default defineNuxtRouteMiddleware(async (to) => {
+  console.log("🛡️ Middleware auth executado para:", to.path);
+
   if (process.client) {
-    const { user } = useAuth()
-    
-    console.log('👤 Estado do usuário no middleware:', user.value ? 'Logado' : 'Não logado')
-    
-    if (!user.value) {
-      console.log('❌ Usuário não autenticado - redirecionando para login')
-      return navigateTo('/login')
+    const supabase = useSupabaseClient();
+
+    // Verificar sessão antes de decidir redirecionar
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    console.log(
+      "👤 Estado da sessão no middleware:",
+      session?.user ? "Logado" : "Não logado"
+    );
+
+    if (!session?.user) {
+      console.log("❌ Usuário não autenticado - redirecionando para login");
+      return navigateTo("/login");
     }
-    
-    console.log('✅ Usuário autenticado - permitindo acesso')
+
+    console.log("✅ Usuário autenticado - permitindo acesso");
   }
-})
+});

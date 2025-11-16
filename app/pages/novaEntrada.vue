@@ -20,7 +20,10 @@
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-12">
+      <div
+        v-if="carregandoDados"
+        class="flex justify-center items-center py-12"
+      >
         <div class="flex items-center space-x-3">
           <div
             class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"
@@ -33,7 +36,7 @@
 
       <!-- Error State -->
       <div
-        v-else-if="error"
+        v-else-if="errorMensagem"
         class="bg-danger-50 border border-danger-200 rounded-xl p-6 mb-6"
       >
         <div class="flex items-center space-x-3">
@@ -42,7 +45,7 @@
             <h3 class="text-danger-800 font-semibold">
               Erro ao carregar dados
             </h3>
-            <p class="text-danger-600">{{ error }}</p>
+            <p class="text-danger-600">{{ errorMensagem }}</p>
           </div>
         </div>
       </div>
@@ -59,8 +62,8 @@
                 Lista de Colaboradores
               </h2>
               <p class="text-sm text-secondary-600 mt-1">
-                Total: {{ colaboradores.length }} colaborador(es)
-                <span v-if="termoPesquisa.trim()">
+                Total: {{ colaboradores?.length || 0 }} colaborador(es)
+                <span v-if="termoPesquisa?.trim()">
                   • Filtrados: {{ colaboradoresFiltrados.length }}
                 </span>
               </p>
@@ -132,7 +135,7 @@
                   </svg>
                 </div>
                 <button
-                  v-if="termoPesquisa.trim()"
+                  v-if="termoPesquisa?.trim()"
                   @click="termoPesquisa = ''"
                   class="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
@@ -185,25 +188,6 @@
                     ></path>
                   </svg>
                 </div>
-                <button
-                  v-if="dataFiltro"
-                  @click="dataFiltro = ''"
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  <svg
-                    class="h-4 w-4 text-neutral-400 hover:text-neutral-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    ></path>
-                  </svg>
-                </button>
               </div>
 
               <!-- Botões de atalho de data -->
@@ -211,14 +195,16 @@
                 <button
                   @click="definirDataHoje"
                   class="px-3 py-1 text-xs bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition-colors"
+                  title="Ir para hoje"
                 >
-                  Hoje
+                  📅 Hoje
                 </button>
                 <button
                   @click="definirDataOntem"
                   class="px-3 py-1 text-xs bg-neutral-100 text-neutral-700 rounded-md hover:bg-neutral-200 transition-colors"
+                  title="Ir para ontem"
                 >
-                  Ontem
+                  ⬅️ Ontem
                 </button>
                 <button
                   @click="definirSemanaAtual"
@@ -232,7 +218,7 @@
 
           <!-- Informações de filtro ativo -->
           <div
-            v-if="dataFiltro || termoPesquisa.trim()"
+            v-if="dataFiltro || termoPesquisa?.trim()"
             class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200"
           >
             <div class="flex items-center text-sm text-blue-800">
@@ -257,10 +243,10 @@
                 📅 {{ formatarDataBrasileira(dataFiltro) }}
               </span>
               <span
-                v-if="termoPesquisa.trim()"
+                v-if="termoPesquisa?.trim()"
                 class="ml-2 px-2 py-1 bg-blue-100 rounded text-xs"
               >
-                🔍 "{{ termoPesquisa.trim() }}"
+                🔍 "{{ termoPesquisa?.trim() }}"
               </span>
             </div>
           </div>
@@ -356,7 +342,7 @@
               </thead>
               <tbody class="bg-white divide-y divide-neutral-200">
                 <!-- Nenhum colaborador cadastrado -->
-                <tr v-if="colaboradores.length === 0">
+                <tr v-if="!colaboradores || colaboradores.length === 0">
                   <td colspan="14" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center">
                       <UsersIcon class="h-12 w-12 text-neutral-300 mb-4" />
@@ -910,11 +896,11 @@
 
         <!-- Footer da tabela -->
         <div
-          v-if="colaboradores.length > 0"
+          v-if="colaboradores && colaboradores.length > 0"
           class="px-6 py-3 bg-neutral-50 border-t border-neutral-200"
         >
           <p class="text-sm text-secondary-600">
-            <span v-if="termoPesquisa.trim()">
+            <span v-if="termoPesquisa?.trim()">
               Exibindo {{ colaboradoresFiltrados.length }} de
               {{ colaboradores.length }} colaborador(es)
             </span>
@@ -1000,7 +986,7 @@
 </template>
 
 <script setup>
-import { computed, ref, nextTick, onMounted } from "vue";
+import { computed, ref, nextTick, onMounted, watch } from "vue";
 import { utils, writeFile } from "xlsx";
 import {
   ExclamationTriangleIcon,
@@ -1010,9 +996,6 @@ import {
   ArrowLeftOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
 
-// Imports explícitos dos componentes
-import BaseButton from "~/components/BaseButton.vue";
-
 // Aplicar middleware de autenticação
 definePageMeta({
   middleware: "auth",
@@ -1020,12 +1003,23 @@ definePageMeta({
 
 // Composable para gerenciar colaboradores
 const {
-  colaboradores,
+  colaboradores: colaboradoresStore,
   loading,
   error,
   buscarColaboradores,
   atualizarColaborador,
 } = useColaboradores();
+
+// Composable para gerenciar histórico
+const {
+  buscarHistoricoPorData,
+  salvarHistorico,
+  buscarHistoricosPorData,
+  mesclarColaboradoresComHistorico,
+} = useHistorico();
+
+// Estado local para colaboradores (writable)
+const colaboradores = ref([]);
 
 // Estado de edição
 const editandoColaborador = ref(null);
@@ -1040,8 +1034,12 @@ const salvandoCelula = ref(false);
 // Estado para pesquisa
 const termoPesquisa = ref("");
 
-// Estado para filtro de data
-const dataFiltro = ref("");
+// Estado para filtro de data (inicializa com data de hoje)
+const dataFiltro = ref(new Date().toISOString().split("T")[0]); // formato YYYY-MM-DD
+
+// Estado para loading de dados
+const carregandoDados = ref(false);
+const errorMensagem = ref(null);
 
 // Estado para exportação
 const exportandoExcel = ref(false);
@@ -1072,10 +1070,12 @@ const diaSemanAtual = computed(() => {
 
 // Computed para filtrar colaboradores
 const colaboradoresFiltrados = computed(() => {
+  if (!colaboradores.value) return [];
+
   let resultados = colaboradores.value;
 
   // Filtro por texto
-  if (termoPesquisa.value.trim()) {
+  if (termoPesquisa.value && termoPesquisa.value.trim()) {
     const termo = termoPesquisa.value.toLowerCase().trim();
     resultados = resultados.filter(
       (colaborador) =>
@@ -1086,49 +1086,9 @@ const colaboradoresFiltrados = computed(() => {
     );
   }
 
-  // Filtro por data
-  if (dataFiltro.value) {
-    // Criar data a partir do input (formato YYYY-MM-DD)
-    const dataFiltroObj = new Date(dataFiltro.value + "T00:00:00");
-    const inicioDia = new Date(
-      dataFiltroObj.getFullYear(),
-      dataFiltroObj.getMonth(),
-      dataFiltroObj.getDate()
-    );
-    const fimDia = new Date(
-      dataFiltroObj.getFullYear(),
-      dataFiltroObj.getMonth(),
-      dataFiltroObj.getDate() + 1
-    );
+  // NÃO filtrar por data - sempre mostrar TODOS os colaboradores
+  // A data é usada apenas para carregar/salvar o histórico correto
 
-    resultados = resultados.filter((colaborador) => {
-      // Verificar se tem alguma movimentação na data selecionada
-      let temMovimentacao = false;
-
-      for (let i = 1; i <= 5; i++) {
-        const entKey = `ent${i}`;
-        const saiKey = `sai${i}`;
-        const entrada = colaborador[entKey];
-        const saida = colaborador[saiKey];
-
-        if (entrada) {
-          const dataEntrada = new Date(entrada);
-          if (dataEntrada >= inicioDia && dataEntrada < fimDia) {
-            temMovimentacao = true;
-          }
-        }
-
-        if (saida) {
-          const dataSaida = new Date(saida);
-          if (dataSaida >= inicioDia && dataSaida < fimDia) {
-            temMovimentacao = true;
-          }
-        }
-      }
-
-      return temMovimentacao;
-    });
-  }
   return resultados;
 });
 
@@ -1186,7 +1146,16 @@ const iniciarEdicaoCelula = (colaboradorId, campo, valorAtual) => {
 };
 
 const salvarEdicaoCelula = async (colaboradorId, campo) => {
-  if (salvandoCelula.value) return;
+  console.log("🔧 salvarEdicaoCelula CHAMADA:", {
+    colaboradorId,
+    campo,
+    salvandoCelula: salvandoCelula.value,
+  });
+
+  if (salvandoCelula.value) {
+    console.log("⏸️ Salvamento já em andamento, ignorando...");
+    return;
+  }
 
   try {
     salvandoCelula.value = true;
@@ -1196,49 +1165,118 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       `💾 Salvando ${campo} para colaborador ${colaboradorId}: ${valorAtual}`
     );
 
+    // Buscar colaborador para pegar dados cadastrais
+    const colaborador = colaboradores.value.find((c) => c.id === colaboradorId);
+    console.log("👤 Colaborador encontrado:", colaborador ? "SIM" : "NÃO");
+    if (!colaborador) {
+      throw new Error("Colaborador não encontrado");
+    }
+
     // Preparar dados para atualização
     const dadosAtualizados = {};
 
     if (valorAtual && valorAtual.trim()) {
-      // Converter "HH:MM" para timestamp compensando fuso horário
-      const hoje = new Date();
+      // Converter "HH:MM" para timestamp ISO
       const [horas, minutos] = valorAtual.split(":");
 
       console.log(
         `🕐 Convertendo ${campo}: ${valorAtual} (${horas}:${minutos})`
       );
 
-      // CORRIGIR fuso horário: SUBTRAIR 3 horas para que quando
-      // o sistema aplicar UTC-3, fique o horário correto
-      const horasComCompensacao = parseInt(horas) - 3;
+      // Criar timestamp usando UTC para evitar problemas de fuso horário
+      // Formato: YYYY-MM-DDTHH:MM:00.000Z
+      const timestampISO = `${dataFiltro.value}T${String(horas).padStart(
+        2,
+        "0"
+      )}:${String(minutos).padStart(2, "0")}:00.000Z`;
 
-      const dataUTC = new Date(
-        hoje.getFullYear(),
-        hoje.getMonth(),
-        hoje.getDate(),
-        horasComCompensacao,
-        parseInt(minutos),
-        0
-      );
+      console.log(`📅 Timestamp ISO criado: ${timestampISO}`);
 
-      console.log(`📅 Hora original: ${horas}:${minutos}`);
-      console.log(`📅 Hora compensada: ${horasComCompensacao}:${minutos}`);
-      console.log(`📅 Data UTC: ${dataUTC.toString()}`);
-      console.log(`📅 ISO String: ${dataUTC.toISOString()}`);
-
-      dadosAtualizados[campo] = dataUTC.toISOString();
+      dadosAtualizados[campo] = timestampISO;
     } else {
       // Se vazio, setar como null
       dadosAtualizados[campo] = null;
     }
 
-    await atualizarColaborador(colaboradorId, dadosAtualizados);
+    // Buscar histórico existente da data atual para este colaborador
+    console.log("🔍 Buscando histórico para:", {
+      colaboradorId,
+      data: dataFiltro.value,
+    });
+    const { historico: historicoColaborador } = await buscarHistoricoPorData(
+      colaboradorId,
+      dataFiltro.value
+    );
+    console.log("📋 Histórico encontrado:", historicoColaborador);
 
-    // Cancelar edição
+    // Preparar dados completos do histórico
+    // ⚠️ IMPORTANTE: Usar APENAS dados do histórico da data selecionada
+    // NÃO usar dados da tabela colaboradores (que não tem relação com data)
+    const dadosHistorico = {
+      nome: colaborador.nome,
+      funcao: colaborador.funcao,
+      filial: colaborador.filial,
+      matricula: colaborador.matricula,
+      // Campos de entrada/saída APENAS do histórico existente para esta data
+      ent1: historicoColaborador?.ent1 || null,
+      sai1: historicoColaborador?.sai1 || null,
+      ent2: historicoColaborador?.ent2 || null,
+      sai2: historicoColaborador?.sai2 || null,
+      ent3: historicoColaborador?.ent3 || null,
+      sai3: historicoColaborador?.sai3 || null,
+      ent4: historicoColaborador?.ent4 || null,
+      sai4: historicoColaborador?.sai4 || null,
+      ent5: historicoColaborador?.ent5 || null,
+      sai5: historicoColaborador?.sai5 || null,
+      // Atualizar campo específico
+      [campo]: dadosAtualizados[campo],
+    };
+
+    // Salvar no histórico APENAS (não salvar na tabela principal)
+    // A tabela colaboradores é apenas cadastral, não tem relação com datas
+    console.log("💾 Salvando no histórico para data:", dataFiltro.value);
+    console.log("📝 Dados:", dadosHistorico);
+    console.log("🔧 Campo:", campo, "Valor:", dadosAtualizados[campo]);
+    console.log("🚀 Chamando salvarHistorico...");
+
+    const resultado = await salvarHistorico(
+      colaboradorId,
+      dataFiltro.value,
+      dadosHistorico
+    );
+
+    console.log("📦 Resultado do salvarHistorico:", resultado);
+
+    if (resultado?.error) {
+      console.error("❌ Falha ao salvar:", resultado?.error);
+      throw new Error(resultado?.error || "Erro ao salvar histórico");
+    }
+
+    console.log("✅ Histórico salvo com sucesso!");
+
+    // Cancelar edição primeiro
     cancelarEdicaoCelula();
+
+    // Recarregar dados para garantir sincronização
+    await carregarDadosPorData(dataFiltro.value);
+
+    // Salvo sem notificação para não poluir a interface
   } catch (err) {
-    console.error("Erro ao salvar célula:", err);
-    alert("Erro ao salvar. Tente novamente.");
+    console.error("❌ Erro ao salvar célula:", err);
+
+    // Verificar se é erro de tabela não existente
+    if (err.message?.includes("colaboradores_historico")) {
+      alert(
+        "⚠️ ERRO: Tabela de histórico não encontrada!\n\n" +
+          "Para que as edições de horário funcionem, você precisa:\n\n" +
+          "1. Acessar o Supabase Dashboard\n" +
+          "2. Ir em SQL Editor\n" +
+          "3. Executar o script: database/create_historico_table.sql\n\n" +
+          "Consulte o arquivo SETUP_TABELA_HISTORICO.md para instruções detalhadas."
+      );
+    } else {
+      alert(`Erro ao salvar: ${err.message}. Tente novamente.`);
+    }
   } finally {
     salvandoCelula.value = false;
   }
@@ -1566,13 +1604,93 @@ const exportarPDF = async () => {
   } finally {
     exportandoPDF.value = false;
   }
-}; // Carregar dados na inicialização
+};
+
+/**
+ * Carregar dados por data
+ * Busca colaboradores e mescla com histórico da data selecionada
+ */
+const carregarDadosPorData = async (data) => {
+  // Validar se a data não está vazia
+  if (!data || data.trim() === "") {
+    console.warn("⚠️ Data inválida ou vazia, usando data de hoje");
+    data = new Date().toISOString().split("T")[0];
+    dataFiltro.value = data;
+  }
+
+  carregandoDados.value = true;
+
+  try {
+    console.log(`📅 Carregando dados para data: ${data}`);
+
+    // 1. Buscar colaboradores (dados cadastrais)
+    await buscarColaboradores();
+
+    // 2. Buscar históricos da data selecionada
+    const { historicos, error: errorHistorico } = await buscarHistoricosPorData(
+      data
+    );
+
+    if (errorHistorico) {
+      console.error("Erro ao buscar históricos:", errorHistorico);
+      throw errorHistorico;
+    }
+
+    console.log(`✅ ${historicos?.length || 0} históricos encontrados`);
+
+    // 3. Mesclar dados cadastrais com dados do histórico
+    if (colaboradoresStore.value && colaboradoresStore.value.length > 0) {
+      colaboradores.value = mesclarColaboradoresComHistorico(
+        colaboradoresStore.value,
+        historicos
+      );
+    }
+
+    console.log(`✅ Dados carregados para data: ${data}`);
+    errorMensagem.value = null;
+  } catch (err) {
+    console.error("❌ Erro ao carregar dados:", err);
+
+    // Se a tabela não existe, apenas mostrar log, não erro ao usuário
+    if (err?.code === "42P01" || err?.message?.includes("does not exist")) {
+      console.warn("⚠️ Tabela colaboradores_historico não existe");
+      errorMensagem.value = null;
+      return; // Não mostrar erro ao usuário
+    }
+
+    errorMensagem.value = "Erro ao carregar dados da data selecionada";
+    mostrarNotificacao(
+      "Erro ao Carregar",
+      "Erro ao carregar dados da data selecionada. Tente novamente.",
+      "error"
+    );
+  } finally {
+    carregandoDados.value = false;
+  }
+};
+
+// Carregar dados na inicialização
 onMounted(async () => {
   try {
-    await buscarColaboradores();
+    await carregarDadosPorData(dataFiltro.value);
   } catch (err) {
     console.error("Erro ao carregar colaboradores:", err);
   }
+});
+
+// Observar mudanças na data e recarregar dados
+watch(dataFiltro, (novaData) => {
+  console.log(`🔄 Data alterada para: ${novaData}`);
+
+  // Se a data foi limpa, definir para hoje
+  if (!novaData || novaData.trim() === "") {
+    console.log("⚠️ Data vazia, resetando para hoje");
+    dataFiltro.value = new Date().toISOString().split("T")[0];
+    return;
+  }
+
+  // Carregar dados da nova data
+  carregarDadosPorData(novaData);
 });
 
 // Meta tags para SEO

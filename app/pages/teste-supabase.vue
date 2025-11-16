@@ -37,8 +37,6 @@
 </template>
 
 <script setup>
-import BaseButton from "~/components/BaseButton.vue";
-
 const supabase = useSupabaseClient();
 const loading = ref(false);
 const resultado = ref(null);
