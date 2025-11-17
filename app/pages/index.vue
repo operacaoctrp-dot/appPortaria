@@ -23,19 +23,19 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-8">
-      <div class="grid md:grid-cols-2 gap-8">
+    <div class="container mx-auto px-4 py-6">
+      <div class="grid md:grid-cols-2 gap-6">
         <!-- Entrada de Funcionário -->
         <div
-          class="bg-white rounded-2xl shadow-medium p-8 border border-neutral-100"
+          class="bg-white rounded-xl shadow-md p-6 border border-neutral-100"
         >
           <h2
-            class="text-2xl font-semibold text-success-600 mb-6 flex items-center"
+            class="text-xl font-semibold text-success-600 mb-4 flex items-center"
           >
-            <ArrowRightOnRectangleIcon class="h-7 w-7 mr-3 text-success-500" />
+            <ArrowRightOnRectangleIcon class="h-6 w-6 mr-2 text-success-500" />
             Entrada de Funcionário
           </h2>
-          <form @submit.prevent="registrarEntrada" class="space-y-5">
+          <form @submit.prevent="registrarEntrada" class="space-y-4">
             <BaseInput
               v-model="entradaForm.nome"
               label="Nome do Funcionário"
@@ -56,7 +56,7 @@
             <BaseButton
               type="submit"
               variant="success"
-              size="lg"
+              size="md"
               :icon="CheckIcon"
               full-width
             >
@@ -67,15 +67,15 @@
 
         <!-- Saída de Funcionário -->
         <div
-          class="bg-white rounded-2xl shadow-medium p-8 border border-neutral-100"
+          class="bg-white rounded-xl shadow-md p-6 border border-neutral-100"
         >
           <h2
-            class="text-2xl font-semibold text-danger-600 mb-6 flex items-center"
+            class="text-xl font-semibold text-danger-600 mb-4 flex items-center"
           >
-            <ArrowLeftOnRectangleIcon class="h-7 w-7 mr-3 text-danger-500" />
+            <ArrowLeftOnRectangleIcon class="h-6 w-6 mr-2 text-danger-500" />
             Saída de Funcionário
           </h2>
-          <form @submit.prevent="registrarSaida" class="space-y-5">
+          <form @submit.prevent="registrarSaida" class="space-y-4">
             <div>
               <label
                 class="block text-sm font-semibold text-secondary-700 mb-2"
@@ -154,7 +154,7 @@
             <BaseButton
               type="submit"
               variant="danger"
-              size="lg"
+              size="md"
               :icon="XMarkIcon"
               :disabled="!saidaForm.funcionarioId"
               full-width
@@ -209,17 +209,27 @@
       <div
         class="mt-10 bg-white rounded-2xl shadow-medium p-8 border border-neutral-100"
       >
-        <h3
-          class="text-2xl font-semibold text-secondary-800 mb-6 flex items-center"
-        >
-          <UsersIcon class="h-7 w-7 mr-3 text-primary-500" />
-          Funcionários Presentes
-          <span
-            class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-primary-100 text-primary-800"
+        <div class="flex justify-between items-center mb-6">
+          <h3
+            class="text-2xl font-semibold text-secondary-800 flex items-center"
           >
-            {{ funcionariosPresentes.length }}
-          </span>
-        </h3>
+            <UsersIcon class="h-7 w-7 mr-3 text-primary-500" />
+            Funcionários Presentes
+            <span
+              class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-primary-100 text-primary-800"
+            >
+              {{ funcionariosPresentes.length }}
+            </span>
+          </h3>
+          <BaseButton
+            @click="carregarMovimentacoesDia"
+            variant="outline"
+            size="sm"
+            :icon="ArrowPathIcon"
+          >
+            Atualizar
+          </BaseButton>
+        </div>
         <div
           v-if="funcionariosPresentes.length === 0"
           class="text-neutral-500 text-center py-12 flex flex-col items-center"
@@ -234,49 +244,52 @@
         </div>
         <div
           v-else
-          class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          class="grid gap-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
         >
           <div
             v-for="funcionario in funcionariosPresentes"
             :key="funcionario.id"
-            class="border-2 border-neutral-100 rounded-lg p-3 hover:shadow-medium transition-all duration-200 hover:border-primary-200 bg-gradient-to-br from-white to-neutral-50"
+            class="border border-neutral-200 rounded-lg p-2.5 hover:shadow-md transition-all duration-200 hover:border-primary-300 bg-white"
           >
             <div class="flex items-start justify-between">
-              <div class="flex-1">
+              <div class="flex-1 min-w-0">
                 <h4
-                  class="font-semibold text-secondary-800 flex items-center text-base"
+                  class="font-semibold text-secondary-800 flex items-center text-sm truncate"
                 >
-                  <UserIcon class="h-4 w-4 mr-2 text-primary-500" />
+                  <UserIcon
+                    class="h-3.5 w-3.5 mr-1.5 text-primary-500 flex-shrink-0"
+                  />
                   {{ funcionario.nome }}
                 </h4>
-                <p class="text-secondary-600 flex items-center mt-1 text-sm">
-                  <BriefcaseIcon class="h-3 w-3 mr-2 text-neutral-400" />
+                <p
+                  class="text-secondary-600 flex items-center mt-0.5 text-xs truncate"
+                >
+                  <BriefcaseIcon
+                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                  />
                   {{ funcionario.cargo }}
                 </p>
                 <p
                   v-if="funcionario.matricula"
-                  class="text-neutral-500 mt-1 flex items-center text-xs"
+                  class="text-neutral-500 mt-0.5 flex items-center text-xs"
                 >
-                  <DocumentTextIcon class="h-3 w-3 mr-2 text-neutral-400" />
+                  <DocumentTextIcon
+                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                  />
                   Mat: {{ funcionario.matricula }}
                 </p>
-                <p
-                  v-if="funcionario.filial"
-                  class="text-neutral-500 mt-1 flex items-center text-xs"
-                >
-                  <UsersIcon class="h-3 w-3 mr-2 text-neutral-400" />
-                  {{ funcionario.filial }}
-                </p>
-                <p class="text-neutral-500 mt-2 flex items-center text-xs">
-                  <ClockIcon class="h-3 w-3 mr-2 text-neutral-400" />
+                <p class="text-neutral-500 mt-1 flex items-center text-xs">
+                  <ClockIcon
+                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                  />
                   {{ formatarHora(funcionario.horaEntrada) }}
                 </p>
               </div>
-              <div class="ml-2 flex flex-col items-center">
+              <div class="ml-1.5 flex flex-col items-center flex-shrink-0">
                 <div
-                  class="w-2 h-2 bg-success-500 rounded-full animate-pulse shadow-soft"
+                  class="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse"
                 ></div>
-                <span class="text-xs text-success-600 font-medium mt-1"
+                <span class="text-[10px] text-success-600 font-medium mt-0.5"
                   >Online</span
                 >
               </div>
@@ -287,44 +300,44 @@
 
       <!-- Dashboard de Histórico e Estatísticas -->
       <div
-        class="mt-10 bg-white rounded-2xl shadow-medium border border-neutral-100 overflow-hidden"
+        class="mt-8 bg-white rounded-xl shadow-md border border-neutral-100 overflow-hidden"
       >
         <!-- Header com abas -->
-        <div class="bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-6">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-2xl font-bold text-white flex items-center">
-              <DocumentTextIcon class="h-7 w-7 mr-3" />
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold text-white flex items-center">
+              <DocumentTextIcon class="h-5 w-5 mr-2" />
               Centro de Controle
             </h3>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
               <!-- Seletor de Data -->
               <div
-                class="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2"
+                class="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-1.5"
               >
-                <ClockIcon class="h-5 w-5 text-white" />
+                <ClockIcon class="h-4 w-4 text-white" />
                 <input
                   type="date"
                   v-model="dataSelecionada"
-                  class="bg-transparent text-white font-medium border-none focus:outline-none focus:ring-0 cursor-pointer"
+                  class="bg-transparent text-white text-sm font-medium border-none focus:outline-none focus:ring-0 cursor-pointer"
                   :max="new Date().toISOString().split('T')[0]"
                 />
                 <span
                   v-if="
                     dataSelecionada === new Date().toISOString().split('T')[0]
                   "
-                  class="bg-success-500 text-white text-xs px-2 py-1 rounded-full font-semibold"
+                  class="bg-success-500 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold"
                 >
                   HOJE
                 </span>
               </div>
 
-              <div class="flex space-x-2">
+              <div class="flex space-x-1.5">
                 <button
                   v-for="(aba, index) in abasHistorico"
                   :key="index"
                   @click="abaAtiva = index"
                   :class="[
-                    'px-4 py-2 rounded-lg font-medium transition-all duration-200',
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
                     abaAtiva === index
                       ? 'bg-white text-primary-600 shadow-md'
                       : 'text-primary-100 hover:text-white hover:bg-primary-400',
@@ -337,35 +350,35 @@
           </div>
 
           <!-- Estatísticas rápidas -->
-          <div class="grid grid-cols-4 gap-4">
+          <div class="grid grid-cols-4 gap-3">
             <div class="text-center">
-              <div class="text-3xl font-bold text-white">{{ totalHoje }}</div>
-              <div class="text-primary-100 text-sm">Movimentações Hoje</div>
+              <div class="text-2xl font-bold text-white">{{ totalHoje }}</div>
+              <div class="text-primary-100 text-xs">Movimentações</div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-white">
+              <div class="text-2xl font-bold text-white">
                 {{ funcionariosPresentes.length }}
               </div>
-              <div class="text-primary-100 text-sm">Presentes Agora</div>
+              <div class="text-primary-100 text-xs">Presentes</div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-white">{{ picoHorario }}</div>
-              <div class="text-primary-100 text-sm">Pico do Dia</div>
+              <div class="text-2xl font-bold text-white">{{ picoHorario }}</div>
+              <div class="text-primary-100 text-xs">Pico do Dia</div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-white">
+              <div class="text-2xl font-bold text-white">
                 {{ tempoMedioPresenca }}
               </div>
-              <div class="text-primary-100 text-sm">Tempo Médio</div>
+              <div class="text-primary-100 text-xs">Tempo Médio</div>
             </div>
           </div>
         </div>
 
         <!-- Conteúdo do painel: gráfico + filtros -->
-        <div class="p-6">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Gráfico principal ocupa 2 colunas em telas grandes -->
-            <div class="lg:col-span-2">
+        <div class="p-5">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Gráfico principal -->
+            <div>
               <ChartCard
                 :title="'Entradas x Saídas'"
                 type="line"
@@ -374,143 +387,342 @@
                 @periodChange="handlePeriodChange"
               />
             </div>
-
-            <!-- Painel lateral com estatísticas rápidas -->
-            <div class="lg:col-span-1">
-              <div class="bg-white rounded-xl p-4 border border-neutral-100">
-                <h4 class="text-md font-semibold mb-3">Resumo</h4>
-                <div
-                  v-if="chartSummary && chartSummary.length > 0"
-                  class="space-y-3"
-                >
-                  <div
-                    v-for="s in chartSummary"
-                    :key="s.label"
-                    class="flex items-center justify-between"
-                  >
-                    <span class="text-sm text-neutral-600">{{ s.label }}</span>
-                    <span class="font-bold text-lg text-neutral-800">{{
-                      s.value
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         <!-- Conteúdo das abas -->
-        <div class="p-8">
+        <div class="p-5">
           <!-- Aba Timeline -->
           <div v-if="abaAtiva === 0">
-            <div class="flex justify-between items-center mb-6">
-              <h4 class="text-xl font-semibold text-secondary-800">
-                Timeline do Dia
-              </h4>
-              <div class="flex space-x-3">
-                <select
-                  v-model="filtroTipo"
-                  class="px-3 py-2 border border-neutral-300 rounded-lg text-sm"
-                >
-                  <option value="">Todos os tipos</option>
-                  <option value="entrada">Entradas</option>
-                  <option value="saida">Saídas</option>
-                </select>
-                <input
-                  v-model="filtroNome"
-                  placeholder="Buscar funcionário..."
-                  class="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-48"
-                />
-              </div>
-            </div>
-
-            <div
-              v-if="historicoFiltrado.length === 0"
-              class="text-center py-12"
-            >
-              <ClipboardDocumentListIcon
-                class="h-16 w-16 text-neutral-300 mb-4 mx-auto"
-              />
-              <p class="text-lg font-medium text-neutral-500">
-                Nenhum registro encontrado
-              </p>
-              <p class="text-sm text-neutral-400 mt-1">
-                Os registros aparecerão aqui conforme as movimentações
-              </p>
-            </div>
-
-            <!-- Timeline visual -->
-            <div v-else class="relative">
-              <!-- Linha central -->
-              <div
-                class="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-200 via-primary-300 to-primary-200"
-              ></div>
-
-              <div class="space-y-6">
+            <!-- Grid com Timeline + Resumo -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <!-- Timeline (2 colunas) -->
+              <div class="lg:col-span-2">
                 <div
-                  v-for="(registro, index) in historicoFiltrado"
-                  :key="registro.id"
-                  class="relative flex items-center group"
+                  class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
                 >
-                  <!-- Marcador na timeline -->
+                  <div>
+                    <h4 class="text-xl font-semibold text-secondary-800">
+                      Timeline do Dia
+                    </h4>
+                    <p class="text-sm text-neutral-500 mt-1">
+                      {{ historicoFiltrado.length }}
+                      {{
+                        historicoFiltrado.length === 1
+                          ? "movimentação"
+                          : "movimentações"
+                      }}
+                      encontradas
+                    </p>
+                  </div>
+                  <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <div class="relative flex-1 sm:flex-initial">
+                      <select
+                        v-model="filtroTipo"
+                        class="w-full sm:w-auto pl-3 pr-8 py-2.5 border border-neutral-300 rounded-lg text-sm bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all cursor-pointer appearance-none"
+                      >
+                        <option value="">📋 Todos os tipos</option>
+                        <option value="entrada">✓ Entradas apenas</option>
+                        <option value="saida">✗ Saídas apenas</option>
+                      </select>
+                      <ChevronUpDownIcon
+                        class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none"
+                      />
+                    </div>
+                    <div
+                      class="relative flex-1 sm:flex-initial sm:min-w-[280px]"
+                    >
+                      <UserIcon
+                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none"
+                      />
+                      <input
+                        v-model="filtroNome"
+                        type="text"
+                        placeholder="Buscar por nome ou cargo..."
+                        class="w-full pl-9 pr-3 py-2.5 border border-neutral-300 rounded-lg text-sm bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                      />
+                      <button
+                        v-if="filtroNome"
+                        @click="filtroNome = ''"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                      >
+                        <XMarkIcon class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  v-if="historicoFiltrado.length === 0"
+                  class="text-center py-16 bg-neutral-50 rounded-xl"
+                >
+                  <ClipboardDocumentListIcon
+                    class="h-20 w-20 text-neutral-300 mb-4 mx-auto"
+                  />
+                  <p class="text-lg font-semibold text-neutral-600">
+                    Nenhum registro encontrado
+                  </p>
+                  <p class="text-sm text-neutral-500 mt-2">
+                    Os registros aparecerão aqui conforme as movimentações
+                  </p>
+                </div>
+
+                <!-- Timeline visual moderna -->
+                <div v-else class="relative space-y-3">
+                  <!-- Linha vertical da timeline -->
                   <div
-                    :class="[
-                      'relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shadow-lg transition-all duration-300 group-hover:scale-125',
-                      registro.tipo === 'entrada'
-                        ? 'bg-gradient-to-br from-success-400 to-success-600'
-                        : 'bg-gradient-to-br from-danger-400 to-danger-600',
-                    ]"
+                    class="absolute left-5 top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-300 via-primary-400 to-primary-300"
+                  ></div>
+
+                  <div
+                    v-for="(registro, index) in historicoFiltrado"
+                    :key="registro.id"
+                    class="relative flex items-start group"
                   >
-                    <ArrowRightOnRectangleIcon
-                      v-if="registro.tipo === 'entrada'"
-                      class="h-4 w-4 text-white"
-                    />
-                    <ArrowLeftOnRectangleIcon
-                      v-else
-                      class="h-4 w-4 text-white"
-                    />
+                    <!-- Ponto na timeline -->
+                    <div class="relative z-10 flex-shrink-0">
+                      <div
+                        :class="[
+                          'flex items-center justify-center w-10 h-10 rounded-full border-3 border-white shadow-lg transition-all duration-300 group-hover:scale-110',
+                          registro.tipo === 'entrada'
+                            ? 'bg-gradient-to-br from-success-500 to-success-600'
+                            : 'bg-gradient-to-br from-danger-500 to-danger-600',
+                        ]"
+                      >
+                        <ArrowRightOnRectangleIcon
+                          v-if="registro.tipo === 'entrada'"
+                          class="h-5 w-5 text-white"
+                        />
+                        <ArrowLeftOnRectangleIcon
+                          v-else
+                          class="h-5 w-5 text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Card compacto do registro -->
+                    <div
+                      :class="[
+                        'ml-5 flex-1 p-3 rounded-lg border transition-all duration-300 group-hover:shadow-md',
+                        registro.tipo === 'entrada'
+                          ? 'border-l-4 border-l-success-500 bg-white hover:bg-success-50/30'
+                          : 'border-l-4 border-l-danger-500 bg-white hover:bg-danger-50/30',
+                      ]"
+                    >
+                      <div class="flex justify-between items-center">
+                        <!-- Informações principais -->
+                        <div class="flex items-center space-x-4 flex-1">
+                          <!-- Horário destacado -->
+                          <div class="text-center">
+                            <div class="text-xl font-bold text-secondary-800">
+                              {{ formatarHora(registro.hora) }}
+                            </div>
+                            <div
+                              class="text-[10px] text-neutral-500 uppercase font-semibold"
+                            >
+                              {{ calcularTempoRelativo(registro.hora) }}
+                            </div>
+                          </div>
+
+                          <!-- Divisor -->
+                          <div class="h-12 w-px bg-neutral-200"></div>
+
+                          <!-- Dados do funcionário -->
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                              <h5
+                                class="font-bold text-secondary-900 text-sm truncate"
+                              >
+                                {{ registro.nome }}
+                              </h5>
+                              <span
+                                :class="[
+                                  'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                                  registro.tipo === 'entrada'
+                                    ? 'bg-success-100 text-success-700'
+                                    : 'bg-danger-100 text-danger-700',
+                                ]"
+                              >
+                                {{
+                                  registro.tipo === "entrada"
+                                    ? "✓ Entrada"
+                                    : "✗ Saída"
+                                }}
+                              </span>
+                            </div>
+                            <div
+                              class="flex items-center mt-1 space-x-3 text-xs text-secondary-600"
+                            >
+                              <span class="flex items-center">
+                                <BriefcaseIcon
+                                  class="h-3 w-3 mr-1 text-neutral-400"
+                                />
+                                {{ registro.funcao || "Sem cargo" }}
+                              </span>
+                              <span
+                                v-if="registro.matricula"
+                                class="flex items-center"
+                              >
+                                <DocumentTextIcon
+                                  class="h-3 w-3 mr-1 text-neutral-400"
+                                />
+                                Mat: {{ registro.matricula }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Badge de status animado -->
+                        <div
+                          :class="[
+                            'w-2 h-2 rounded-full flex-shrink-0',
+                            registro.tipo === 'entrada'
+                              ? 'bg-success-500 animate-pulse'
+                              : 'bg-danger-500',
+                          ]"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Resumo (1 coluna) -->
+              <div class="lg:col-span-1">
+                <div
+                  class="bg-gradient-to-br from-white to-neutral-50 rounded-lg border border-neutral-200 shadow-sm overflow-hidden sticky top-4"
+                >
+                  <!-- Header do card -->
+                  <div
+                    class="bg-gradient-to-r from-primary-600 to-primary-700 px-3 py-2"
+                  >
+                    <h4
+                      class="text-white font-semibold text-sm flex items-center"
+                    >
+                      <DocumentTextIcon class="h-4 w-4 mr-1.5" />
+                      Resumo
+                    </h4>
+                    <p class="text-primary-100 text-[10px] mt-0.5">
+                      {{ formatarDataCompleta(new Date()) }}
+                    </p>
                   </div>
 
-                  <!-- Card do registro -->
-                  <div
-                    :class="[
-                      'ml-6 flex-1 p-4 rounded-xl border-l-4 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1',
-                      registro.tipo === 'entrada'
-                        ? 'border-success-500 bg-gradient-to-r from-success-50 to-white'
-                        : 'border-danger-500 bg-gradient-to-r from-danger-50 to-white',
-                    ]"
-                  >
-                    <div class="flex justify-between items-start">
-                      <div>
-                        <h5 class="font-bold text-secondary-900 text-lg">
-                          {{ registro.nome }}
-                        </h5>
-                        <p class="text-secondary-600 font-medium">
-                          {{ registro.cargo }}
-                        </p>
-                        <div class="flex items-center mt-2 space-x-4">
-                          <span
-                            :class="[
-                              'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide',
-                              registro.tipo === 'entrada'
-                                ? 'bg-success-100 text-success-700 border border-success-200'
-                                : 'bg-danger-100 text-danger-700 border border-danger-200',
-                            ]"
+                  <!-- Métricas principais -->
+                  <div class="p-3 space-y-2">
+                    <!-- Entradas -->
+                    <div
+                      class="flex items-center justify-between p-2 bg-success-50 rounded-md border border-success-200 hover:bg-success-100 transition-colors"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <div class="bg-success-500 p-1.5 rounded-md">
+                          <ArrowRightOnRectangleIcon
+                            class="h-3.5 w-3.5 text-white"
+                          />
+                        </div>
+                        <div>
+                          <p
+                            class="text-[10px] font-medium text-success-700 uppercase"
                           >
-                            {{ registro.tipo }}
-                          </span>
-                          <span class="text-neutral-500 text-sm">{{
-                            calcularTempoRelativo(registro.hora)
-                          }}</span>
+                            Entradas
+                          </p>
+                          <p class="text-lg font-bold text-success-900">
+                            {{ entradasHoje }}
+                          </p>
                         </div>
                       </div>
-                      <div class="text-right">
-                        <div class="text-2xl font-bold text-secondary-800">
-                          {{ formatarHora(registro.hora) }}
+                    </div>
+
+                    <!-- Saídas -->
+                    <div
+                      class="flex items-center justify-between p-2 bg-danger-50 rounded-md border border-danger-200 hover:bg-danger-100 transition-colors"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <div class="bg-danger-500 p-1.5 rounded-md">
+                          <ArrowLeftOnRectangleIcon
+                            class="h-3.5 w-3.5 text-white"
+                          />
                         </div>
-                        <div class="text-sm text-neutral-500">
-                          {{ formatarDataCompleta(registro.hora) }}
+                        <div>
+                          <p
+                            class="text-[10px] font-medium text-danger-700 uppercase"
+                          >
+                            Saídas
+                          </p>
+                          <p class="text-lg font-bold text-danger-900">
+                            {{ saidasHoje }}
+                          </p>
                         </div>
+                      </div>
+                    </div>
+
+                    <!-- Diferença (Presentes) -->
+                    <div
+                      class="flex items-center justify-between p-2 bg-primary-50 rounded-md border border-primary-200 hover:bg-primary-100 transition-colors"
+                    >
+                      <div class="flex items-center space-x-2">
+                        <div class="bg-primary-500 p-1.5 rounded-md">
+                          <UsersIcon class="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p
+                            class="text-[10px] font-medium text-primary-700 uppercase"
+                          >
+                            Presentes
+                          </p>
+                          <p class="text-lg font-bold text-primary-900">
+                            {{ funcionariosPresentes.length }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Divisor -->
+                    <div class="border-t border-neutral-200 my-2"></div>
+
+                    <!-- Estatísticas secundárias -->
+                    <div class="space-y-1.5">
+                      <div
+                        class="flex items-center justify-between py-1.5 px-2 hover:bg-neutral-50 rounded-md transition-colors"
+                      >
+                        <span
+                          class="text-[10px] text-neutral-600 flex items-center"
+                        >
+                          <ClockIcon class="h-3 w-3 mr-1.5 text-neutral-400" />
+                          Total
+                        </span>
+                        <span class="font-bold text-xs text-neutral-800">{{
+                          totalHoje
+                        }}</span>
+                      </div>
+
+                      <div
+                        class="flex items-center justify-between py-1.5 px-2 hover:bg-neutral-50 rounded-md transition-colors"
+                      >
+                        <span
+                          class="text-[10px] text-neutral-600 flex items-center"
+                        >
+                          <UserGroupIcon
+                            class="h-3 w-3 mr-1.5 text-neutral-400"
+                          />
+                          Únicos
+                        </span>
+                        <span class="font-bold text-xs text-neutral-800">{{
+                          funcionariosUnicos
+                        }}</span>
+                      </div>
+
+                      <div
+                        class="flex items-center justify-between py-1.5 px-2 hover:bg-neutral-50 rounded-md transition-colors"
+                      >
+                        <span
+                          class="text-[10px] text-neutral-600 flex items-center"
+                        >
+                          <ClockIcon class="h-3 w-3 mr-1.5 text-neutral-400" />
+                          Tempo Médio
+                        </span>
+                        <span class="font-bold text-xs text-neutral-800">{{
+                          tempoMedioPresenca
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -782,7 +994,7 @@
                       <td
                         class="px-6 py-4 whitespace-nowrap text-sm text-secondary-600"
                       >
-                        {{ registro.cargo }}
+                        {{ registro.funcao || "Sem cargo" }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <span
@@ -818,7 +1030,7 @@
 
 <script setup>
 // Imports devem vir primeiro
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 import {
   Listbox,
@@ -829,6 +1041,7 @@ import {
 import {
   ArrowRightOnRectangleIcon,
   ArrowLeftOnRectangleIcon,
+  ArrowPathIcon,
   CheckIcon,
   ChevronUpDownIcon,
   XMarkIcon,
@@ -945,44 +1158,68 @@ const abasHistorico = [
   { nome: "📋 Relatórios", icone: "reports" },
 ];
 
-// Funcionários que estão presentes (têm entrada sem saída correspondente)
+// Funcionários que estão presentes (baseado no histórico de movimentações do dia)
 const funcionariosPresentes = computed(() => {
-  return colaboradores.value
-    .filter((colaborador) => {
-      // Verificar se tem alguma entrada sem saída correspondente
-      for (let i = 1; i <= 5; i++) {
-        const entrada = colaborador[`ent${i}`];
-        const saida = colaborador[`sai${i}`];
+  console.log("🔍 Calculando funcionários presentes...");
+  console.log(
+    "📊 Resumo do dia completo:",
+    JSON.stringify(resumoDia.value, null, 2)
+  );
 
-        // Se tem entrada mas não tem saída correspondente, está presente
-        if (entrada && !saida) {
-          return true;
-        }
-      }
-      return false;
+  if (!resumoDia.value || resumoDia.value.length === 0) {
+    console.log("⚪ Nenhum resumo disponível");
+    return [];
+  }
+
+  console.log(`📋 Total de registros no resumo: ${resumoDia.value.length}`);
+
+  // Filtrar colaboradores que têm entrada sem saída (estão presentes)
+  const presentes = resumoDia.value
+    .filter((resumo) => {
+      // Verificar se está presente (campo presente === true OU tem mais entradas que saídas)
+      const temEntradas = resumo.entradas && resumo.entradas.length > 0;
+      const temSaidas = resumo.saidas && resumo.saidas.length > 0;
+      const maisEntradasQueSaidas =
+        temEntradas &&
+        (!temSaidas || resumo.entradas.length > resumo.saidas.length);
+      const estaPresente = resumo.presente || maisEntradasQueSaidas;
+
+      console.log(
+        `👤 ${resumo.nome}:`,
+        `\n   - Entradas: ${
+          resumo.entradas?.length || 0
+        } (${resumo.entradas?.join(", ")})`,
+        `\n   - Saídas: ${resumo.saidas?.length || 0} (${resumo.saidas?.join(
+          ", "
+        )})`,
+        `\n   - Campo presente: ${resumo.presente}`,
+        `\n   - Está presente? ${estaPresente}`
+      );
+      return estaPresente;
     })
-    .map((colaborador) => {
-      // Encontrar a última entrada sem saída
-      let ultimaEntrada = null;
-      for (let i = 5; i >= 1; i--) {
-        const entrada = colaborador[`ent${i}`];
-        const saida = colaborador[`sai${i}`];
-
-        if (entrada && !saida) {
-          ultimaEntrada = entrada;
-          break;
-        }
-      }
+    .map((resumo) => {
+      // Pegar a última (mais recente) entrada
+      const ultimaEntrada =
+        resumo.entradas && resumo.entradas.length > 0
+          ? resumo.entradas[resumo.entradas.length - 1]
+          : null;
 
       return {
-        id: colaborador.id,
-        nome: colaborador.nome,
-        cargo: colaborador.funcao || "Não informado",
+        id: resumo.colaborador_id,
+        nome: resumo.nome,
+        cargo: resumo.funcao || "Não informado",
         horaEntrada: ultimaEntrada ? new Date(ultimaEntrada) : new Date(),
-        matricula: colaborador.matricula,
-        filial: colaborador.filial,
+        matricula: resumo.matricula || null,
+        filial: resumo.filial || null,
       };
     });
+
+  console.log(`✅ Total de funcionários presentes: ${presentes.length}`);
+  console.log(
+    `👥 Funcionários presentes:`,
+    presentes.map((f) => f.nome).join(", ")
+  );
+  return presentes;
 });
 
 // Funcionário selecionado no formulário de saída
@@ -997,17 +1234,27 @@ const funcionarioSelecionado = computed(() => {
 const historicoFiltrado = computed(() => {
   let resultado = historico.value;
 
+  console.log("🔍 Filtrando histórico:", {
+    total: resultado.length,
+    filtroTipo: filtroTipo.value,
+    filtroNome: filtroNome.value,
+  });
+
   if (filtroTipo.value) {
     resultado = resultado.filter((r) => r.tipo === filtroTipo.value);
+    console.log(`📊 Após filtro tipo: ${resultado.length} registros`);
   }
 
   if (filtroNome.value.trim()) {
     const termo = filtroNome.value.toLowerCase().trim();
     resultado = resultado.filter(
       (r) =>
-        r.nome.toLowerCase().includes(termo) ||
-        r.cargo.toLowerCase().includes(termo)
+        r.nome?.toLowerCase().includes(termo) ||
+        r.funcao?.toLowerCase().includes(termo) ||
+        r.cargo?.toLowerCase().includes(termo) ||
+        r.matricula?.toString().includes(termo)
     );
+    console.log(`📊 Após filtro nome: ${resultado.length} registros`);
   }
 
   return resultado.sort((a, b) => new Date(b.hora) - new Date(a.hora));
@@ -1152,7 +1399,9 @@ const registrarEntrada = async () => {
 
       console.log(`✅ Entrada registrada para ${nome}`);
 
-      // Os dados serão atualizados automaticamente pelo watch da data
+      // Recarregar dados para atualizar o card de funcionários presentes
+      await carregarMovimentacoesDia();
+      await buscarColaboradores();
     } else {
       console.error(`❌ Erro: ${resultado.error}`);
     }
@@ -1179,7 +1428,9 @@ const registrarSaida = async () => {
 
       console.log(`✅ Saída registrada para ${funcionario.nome}`);
 
-      // Os dados serão atualizados automaticamente pelo watch da data
+      // Recarregar dados para atualizar o card de funcionários presentes
+      await carregarMovimentacoesDia();
+      await buscarColaboradores();
     } else {
       console.error(`❌ Erro: ${resultado.error}`);
     }
@@ -1269,6 +1520,17 @@ onMounted(async () => {
     await nextTick();
     await carregarMovimentacoesDia();
     console.log("✅ Dados iniciais carregados com sucesso");
+
+    // Auto-refresh a cada 10 segundos para atualizar funcionários presentes
+    const intervalId = setInterval(async () => {
+      console.log("🔄 Auto-refresh: atualizando dados...");
+      await carregarMovimentacoesDia();
+    }, 10000); // 10 segundos
+
+    // Limpar interval quando o componente for desmontado
+    onUnmounted(() => {
+      clearInterval(intervalId);
+    });
   } catch (err) {
     console.error("❌ Erro ao carregar dados iniciais:", err);
     // Não mostrar erro ao usuário, apenas log

@@ -17,6 +17,34 @@
       </div>
     </div>
 
+    <!-- Abas para alternar entre Principal e SFL -->
+    <div class="container mx-auto px-4 mt-6">
+      <div class="flex space-x-2 border-b border-neutral-200">
+        <button
+          @click="abaFilial = 'principal'"
+          :class="[
+            'px-6 py-3 font-semibold text-sm transition-all duration-200 border-b-2',
+            abaFilial === 'principal'
+              ? 'border-primary-600 text-primary-600 bg-primary-50'
+              : 'border-transparent text-neutral-600 hover:text-primary-600 hover:bg-neutral-50',
+          ]"
+        >
+          📋 Principal
+        </button>
+        <button
+          @click="abaFilial = 'sfl'"
+          :class="[
+            'px-6 py-3 font-semibold text-sm transition-all duration-200 border-b-2',
+            abaFilial === 'sfl'
+              ? 'border-primary-600 text-primary-600 bg-primary-50'
+              : 'border-transparent text-neutral-600 hover:text-primary-600 hover:bg-neutral-50',
+          ]"
+        >
+          🏢 SFL
+        </button>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
       <!-- Loading State -->
@@ -1010,6 +1038,18 @@ const {
   atualizarColaborador,
 } = useColaboradores();
 
+// Composable para gerenciar colaboradores SFL
+const {
+  colaboradoresSFL: colaboradoresSFLStore,
+  loading: loadingSFL,
+  error: errorSFL,
+  buscarColaboradoresSFL,
+  atualizarColaborador: atualizarColaboradorSFL,
+} = useColaboradoresSFL();
+
+// Estado para controlar qual aba está ativa
+const abaFilial = ref("principal");
+
 // Composable para gerenciar histórico
 const {
   buscarHistoricoPorData,
@@ -1020,6 +1060,31 @@ const {
 
 // Estado local para colaboradores (writable)
 const colaboradores = ref([]);
+
+// Computed para retornar os colaboradores do store ativo
+const colaboradoresStoreAtivo = computed(() => {
+  return abaFilial.value === "principal"
+    ? colaboradoresStore.value
+    : colaboradoresSFLStore.value;
+});
+
+// Função para buscar colaboradores da aba ativa
+const buscarColaboradoresAtivos = async () => {
+  if (abaFilial.value === "principal") {
+    await buscarColaboradores();
+  } else {
+    await buscarColaboradoresSFL();
+  }
+};
+
+// Função para atualizar colaborador na aba ativa
+const atualizarColaboradorAtivo = async (id, dados) => {
+  if (abaFilial.value === "principal") {
+    return await atualizarColaborador(id, dados);
+  } else {
+    return await atualizarColaboradorSFL(id, dados);
+  }
+};
 
 // Estado de edição
 const editandoColaborador = ref(null);
@@ -1202,10 +1267,12 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     console.log("🔍 Buscando histórico para:", {
       colaboradorId,
       data: dataFiltro.value,
+      origem: abaFilial.value,
     });
     const { historico: historicoColaborador } = await buscarHistoricoPorData(
       colaboradorId,
-      dataFiltro.value
+      dataFiltro.value,
+      abaFilial.value
     );
     console.log("📋 Histórico encontrado:", historicoColaborador);
 
@@ -1237,19 +1304,25 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     console.log("💾 Salvando no histórico para data:", dataFiltro.value);
     console.log("📝 Dados:", dadosHistorico);
     console.log("🔧 Campo:", campo, "Valor:", dadosAtualizados[campo]);
-    console.log("🚀 Chamando salvarHistorico...");
+    console.log("� Origem:", abaFilial.value);
+    console.log("�🚀 Chamando salvarHistorico...");
 
     const resultado = await salvarHistorico(
       colaboradorId,
       dataFiltro.value,
-      dadosHistorico
+      dadosHistorico,
+      abaFilial.value
     );
 
     console.log("📦 Resultado do salvarHistorico:", resultado);
 
     if (resultado?.error) {
       console.error("❌ Falha ao salvar:", resultado?.error);
-      throw new Error(resultado?.error || "Erro ao salvar histórico");
+      const errorMsg =
+        typeof resultado?.error === "string"
+          ? resultado?.error
+          : resultado?.error?.message || JSON.stringify(resultado?.error);
+      throw new Error(errorMsg || "Erro ao salvar histórico");
     }
 
     console.log("✅ Histórico salvo com sucesso!");
@@ -1274,8 +1347,18 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
           "3. Executar o script: database/create_historico_table.sql\n\n" +
           "Consulte o arquivo SETUP_TABELA_HISTORICO.md para instruções detalhadas."
       );
+    } else if (err.message?.includes("origem")) {
+      alert(
+        "⚠️ ERRO: Coluna 'origem' não encontrada!\n\n" +
+          "Execute o script SQL para adicionar a coluna:\n\n" +
+          "1. Acessar o Supabase Dashboard\n" +
+          "2. Ir em SQL Editor\n" +
+          "3. Executar: database/adicionar_coluna_origem.sql\n\n" +
+          "Consulte ATUALIZACAO_ORIGEM_HISTORICO.md para mais detalhes."
+      );
     } else {
-      alert(`Erro ao salvar: ${err.message}. Tente novamente.`);
+      const errorMsg = err.message || String(err);
+      alert(`Erro ao salvar: ${errorMsg}. Tente novamente.`);
     }
   } finally {
     salvandoCelula.value = false;
@@ -1622,13 +1705,15 @@ const carregarDadosPorData = async (data) => {
 
   try {
     console.log(`📅 Carregando dados para data: ${data}`);
+    console.log(`📋 Aba ativa: ${abaFilial.value}`);
 
-    // 1. Buscar colaboradores (dados cadastrais)
-    await buscarColaboradores();
+    // 1. Buscar colaboradores da aba ativa (dados cadastrais)
+    await buscarColaboradoresAtivos();
 
-    // 2. Buscar históricos da data selecionada
+    // 2. Buscar históricos da data selecionada para a aba ativa
     const { historicos, error: errorHistorico } = await buscarHistoricosPorData(
-      data
+      data,
+      abaFilial.value
     );
 
     if (errorHistorico) {
@@ -1639,9 +1724,12 @@ const carregarDadosPorData = async (data) => {
     console.log(`✅ ${historicos?.length || 0} históricos encontrados`);
 
     // 3. Mesclar dados cadastrais com dados do histórico
-    if (colaboradoresStore.value && colaboradoresStore.value.length > 0) {
+    if (
+      colaboradoresStoreAtivo.value &&
+      colaboradoresStoreAtivo.value.length > 0
+    ) {
       colaboradores.value = mesclarColaboradoresComHistorico(
-        colaboradoresStore.value,
+        colaboradoresStoreAtivo.value,
         historicos
       );
     }
@@ -1672,10 +1760,20 @@ const carregarDadosPorData = async (data) => {
 // Carregar dados na inicialização
 onMounted(async () => {
   try {
+    // Carregar ambos os stores na inicialização
+    await buscarColaboradores();
+    await buscarColaboradoresSFL();
+    // Depois carregar os dados da data selecionada
     await carregarDadosPorData(dataFiltro.value);
   } catch (err) {
     console.error("Erro ao carregar colaboradores:", err);
   }
+});
+
+// Observar mudanças na aba e recarregar dados
+watch(abaFilial, async (novaAba) => {
+  console.log(`🔄 Aba alterada para: ${novaAba}`);
+  await carregarDadosPorData(dataFiltro.value);
 });
 
 // Observar mudanças na data e recarregar dados

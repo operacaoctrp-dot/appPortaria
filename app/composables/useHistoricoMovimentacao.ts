@@ -112,6 +112,7 @@ export const useHistoricoMovimentacao = () => {
           .select("*")
           .eq("colaborador_id", colaboradorId)
           .eq("data_registro", hoje)
+          .eq("origem", "principal")
           .maybeSingle();
 
       if (historicoFetchError && historicoFetchError.code !== "PGRST116") {
@@ -142,6 +143,7 @@ export const useHistoricoMovimentacao = () => {
           .insert({
             colaborador_id: colaboradorId,
             data_registro: hoje,
+            origem: "principal",
             nome: colaborador.nome,
             funcao: colaborador.funcao,
             filial: colaborador.filial,
@@ -178,54 +180,41 @@ export const useHistoricoMovimentacao = () => {
     try {
       console.log(`🔍 Buscando movimentações do dia: ${data}`);
 
-      // Buscar do histórico se não for hoje
-      const hoje = new Date().toISOString().split("T")[0];
-      const ehHoje = data === hoje;
+      // SEMPRE buscar do histórico, pois é lá que as movimentações são registradas
+      console.log("🗄️ Buscando do histórico (tabela colaboradores_historico)");
 
-      if (ehHoje) {
-        // Para hoje, buscar da tabela colaboradores
-        const { data: colaboradores, error: fetchError } = await supabase
-          .from("colaboradores")
-          .select("*")
-          .order("nome", { ascending: true });
+      const { data: historico, error: fetchError } = await supabaseAny
+        .from("colaboradores_historico")
+        .select("*")
+        .eq("data_registro", data)
+        .eq("origem", "principal")
+        .order("nome", { ascending: true });
 
-        if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("❌ Erro ao buscar histórico:", fetchError);
 
-        return processarMovimentacoes(colaboradores || []);
-      } else {
-        // Para outros dias, buscar do histórico
-        console.log(
-          "🗄️ Buscando do histórico (tabela colaboradores_historico)"
-        );
-
-        const { data: historico, error: fetchError } = await supabaseAny
-          .from("colaboradores_historico")
-          .select("*")
-          .eq("data_registro", data)
-          .order("nome", { ascending: true });
-
-        if (fetchError) {
-          console.error("❌ Erro ao buscar histórico:", fetchError);
-
-          // Se a tabela não existe, retornar array vazio
-          if (
-            fetchError.code === "42P01" ||
-            fetchError.message?.includes("does not exist")
-          ) {
-            console.warn(
-              "⚠️ Tabela colaboradores_historico não existe. Execute o SQL em database/create_historico_table.sql"
-            );
-            return [];
-          }
-
-          throw fetchError;
+        // Se a tabela não existe, retornar array vazio
+        if (
+          fetchError.code === "42P01" ||
+          fetchError.message?.includes("does not exist")
+        ) {
+          console.warn(
+            "⚠️ Tabela colaboradores_historico não existe. Execute o SQL em database/create_historico_table.sql"
+          );
+          return [];
         }
 
-        console.log(
-          `📋 Encontrados ${historico?.length || 0} registros no histórico`
-        );
-        return processarMovimentacoes(historico || []);
+        throw fetchError;
       }
+
+      console.log(
+        `📋 Encontrados ${historico?.length || 0} registros no histórico`
+      );
+      const movimentacoes = processarMovimentacoes(historico || []);
+      console.log(
+        `✅ Processadas ${movimentacoes.length} movimentações individuais`
+      );
+      return movimentacoes;
     } catch (err: any) {
       error.value = err.message || "Erro ao buscar movimentações";
       console.error("❌ Erro ao buscar movimentações:", err);
@@ -310,28 +299,28 @@ export const useHistoricoMovimentacao = () => {
       const hoje = new Date().toISOString().split("T")[0];
       const ehHoje = data === hoje;
 
+      console.log(`📅 É hoje? ${ehHoje} (hoje: ${hoje}, data: ${data})`);
+
       let registros: any[] = [];
 
-      if (ehHoje) {
-        const { data: colaboradores, error: fetchError } = await supabase
-          .from("colaboradores")
-          .select("*")
-          .order("nome", { ascending: true });
+      // SEMPRE buscar do histórico, pois é lá que as entradas/saídas são registradas
+      console.log("🗄️ Buscando da tabela colaboradores_historico...");
+      const { data: historico, error: fetchError } = await supabaseAny
+        .from("colaboradores_historico")
+        .select("*")
+        .eq("data_registro", data)
+        .eq("origem", "principal")
+        .order("nome", { ascending: true });
 
-        if (fetchError) throw fetchError;
-        registros = colaboradores || [];
-      } else {
-        const { data: historico, error: fetchError } = await supabaseAny
-          .from("colaboradores_historico")
-          .select("*")
-          .eq("data_registro", data)
-          .order("nome", { ascending: true });
-
-        if (fetchError) throw fetchError;
-        registros = historico || [];
+      if (fetchError) {
+        console.error("❌ Erro ao buscar histórico:", fetchError);
+        throw fetchError;
       }
 
-      return registros.map((registro) => {
+      registros = historico || [];
+      console.log(`📋 Encontrados ${registros.length} registros no histórico`);
+
+      const resumo = registros.map((registro) => {
         const entradas: string[] = [];
         const saidas: string[] = [];
 
@@ -350,7 +339,7 @@ export const useHistoricoMovimentacao = () => {
         // Está presente se tem mais entradas que saídas
         const presente = entradas.length > saidas.length;
 
-        return {
+        const resumoColaborador = {
           colaborador_id: registro.colaborador_id || registro.id,
           nome: registro.nome || "Sem nome",
           funcao: registro.funcao,
@@ -360,7 +349,35 @@ export const useHistoricoMovimentacao = () => {
           saidas,
           presente,
         };
+
+        console.log(`📝 Resumo de ${resumoColaborador.nome}:`, {
+          entradas: entradas.length,
+          saidas: saidas.length,
+          presente,
+          campos_entrada: {
+            ent1: registro.ent1,
+            ent2: registro.ent2,
+            ent3: registro.ent3,
+            ent4: registro.ent4,
+            ent5: registro.ent5,
+          },
+          campos_saida: {
+            sai1: registro.sai1,
+            sai2: registro.sai2,
+            sai3: registro.sai3,
+            sai4: registro.sai4,
+            sai5: registro.sai5,
+          },
+        });
+
+        return resumoColaborador;
       });
+
+      console.log(`✅ Resumo processado: ${resumo.length} colaboradores`);
+      console.log(
+        `✅ Funcionários presentes: ${resumo.filter((r) => r.presente).length}`
+      );
+      return resumo;
     } catch (err: any) {
       error.value = err.message || "Erro ao buscar resumo";
       console.error("❌ Erro ao buscar resumo:", err);

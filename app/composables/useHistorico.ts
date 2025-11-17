@@ -37,11 +37,12 @@ export const useHistorico = () => {
    */
   const buscarHistoricoPorData = async (
     colaboradorId: number,
-    data: string // formato: 'YYYY-MM-DD'
+    data: string, // formato: 'YYYY-MM-DD'
+    origem: string = "principal" // 'principal' ou 'sfl'
   ) => {
     try {
       console.log(
-        `🔍 Buscando histórico - Colaborador: ${colaboradorId}, Data: ${data}`
+        `🔍 Buscando histórico - Colaborador: ${colaboradorId}, Data: ${data}, Origem: ${origem}`
       );
 
       const { data: historico, error } = await supabaseAny
@@ -49,6 +50,7 @@ export const useHistorico = () => {
         .select("*")
         .eq("colaborador_id", colaboradorId)
         .eq("data_registro", data)
+        .eq("origem", origem)
         .single();
 
       if (error && error.code !== "PGRST116") {
@@ -91,18 +93,25 @@ export const useHistorico = () => {
       sai4?: string | null;
       ent5?: string | null;
       sai5?: string | null;
-    }
+    },
+    origem: string = "principal" // 'principal' ou 'sfl'
   ) => {
     try {
       console.log(
         "💾 Salvando histórico - Colaborador:",
         colaboradorId,
         "Data:",
-        data
+        data,
+        "Origem:",
+        origem
       );
 
       // Buscar se já existe registro
-      const { historico } = await buscarHistoricoPorData(colaboradorId, data);
+      const { historico } = await buscarHistoricoPorData(
+        colaboradorId,
+        data,
+        origem
+      );
 
       // Preparar dados (garantir que matricula seja string)
       const dadosParaSalvar = {
@@ -124,6 +133,12 @@ export const useHistorico = () => {
 
         if (error) {
           console.error("❌ Erro ao atualizar histórico:", error);
+          console.error("❌ Detalhes:", {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          });
           throw error;
         }
 
@@ -138,6 +153,7 @@ export const useHistorico = () => {
             {
               colaborador_id: colaboradorId,
               data_registro: data,
+              origem: origem,
               ...dadosParaSalvar,
             },
           ])
@@ -145,6 +161,12 @@ export const useHistorico = () => {
 
         if (error) {
           console.error("❌ Erro ao criar histórico:", error);
+          console.error("❌ Detalhes:", {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          });
           throw error;
         }
 
@@ -153,6 +175,8 @@ export const useHistorico = () => {
       }
     } catch (err) {
       console.error("❌ Erro no salvarHistorico:", err);
+      console.error("❌ Tipo do erro:", typeof err);
+      console.error("❌ Erro completo:", JSON.stringify(err, null, 2));
       return { data: null, error: err };
     }
   };
@@ -160,14 +184,20 @@ export const useHistorico = () => {
   /**
    * Buscar históricos de todos os colaboradores em uma data
    */
-  const buscarHistoricosPorData = async (data: string) => {
+  const buscarHistoricosPorData = async (
+    data: string,
+    origem: string = "principal"
+  ) => {
     try {
-      console.log(`🔍 Buscando todos os históricos para data: ${data}`);
+      console.log(
+        `🔍 Buscando todos os históricos para data: ${data}, origem: ${origem}`
+      );
 
       const { data: historicos, error } = await supabaseAny
         .from("colaboradores_historico")
         .select("*")
         .eq("data_registro", data)
+        .eq("origem", origem)
         .order("nome", { ascending: true });
 
       if (error) {
