@@ -25,8 +25,7 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SUPABASE_URL,
     key: process.env.NUXT_PUBLIC_SUPABASE_KEY,
     cookieOptions: {
--      secure: false, // Para desenvolvimento HTTP
-+      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     },
     clientOptions: {
