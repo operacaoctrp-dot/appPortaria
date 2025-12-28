@@ -39,9 +39,8 @@ export const useTheme = () => {
    * Aplicar tema no DOM
    */
   const applyTheme = (theme: "light" | "dark") => {
-    if (process.client) {
+    if (import.meta.client) {
       const html = document.documentElement;
-
       if (theme === "dark") {
         html.classList.add("dark");
       } else {
@@ -54,7 +53,7 @@ export const useTheme = () => {
    * Salvar tema no localStorage
    */
   const saveTheme = (theme: Theme) => {
-    if (process.client) {
+    if (import.meta.client) {
       try {
         localStorage.setItem(STORAGE_KEYS.THEME, theme);
       } catch (error) {
@@ -67,7 +66,7 @@ export const useTheme = () => {
    * Carregar tema do localStorage
    */
   const loadTheme = (): Theme => {
-    if (process.client) {
+    if (import.meta.client) {
       try {
         const saved = localStorage.getItem(STORAGE_KEYS.THEME);
         if (saved && Object.values(THEMES).includes(saved as Theme)) {
@@ -117,35 +116,21 @@ export const useTheme = () => {
    * Inicializar tema
    */
   const initTheme = () => {
-    if (process.client) {
-      // Detectar preferência do sistema
+    if (import.meta.client) {
       detectSystemTheme();
-
-      // Carregar tema salvo
       const savedTheme = loadTheme();
       currentTheme.value = savedTheme;
-
-      // Aplicar tema inicial
       const initialTheme =
-        savedTheme === "system"
-          ? systemTheme.value
-          : (savedTheme as "light" | "dark");
+        savedTheme === "system" ? systemTheme.value : (savedTheme as "light" | "dark");
       applyTheme(initialTheme);
-
-      // Escutar mudanças na preferência do sistema
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleSystemThemeChange = (e: MediaQueryListEvent) => {
         systemTheme.value = e.matches ? "dark" : "light";
-
-        // Se está usando tema do sistema, aplicar a mudança
         if (currentTheme.value === "system") {
           applyTheme(systemTheme.value);
         }
       };
-
       mediaQuery.addEventListener("change", handleSystemThemeChange);
-
-      // Watch para mudanças no tema efetivo
       watch(effectiveTheme, (newTheme) => {
         applyTheme(newTheme);
       });

@@ -22,19 +22,10 @@ export const usePWACustom = () => {
    * Verificar se está instalado como PWA
    */
   const checkIfInstalled = () => {
-    if (process.client) {
-      // Verificar se está rodando em modo standalone (instalado)
-      const isStandalone = window.matchMedia(
-        "(display-mode: standalone)"
-      ).matches;
-
-      // Verificar se é iOS Safari em modo standalone
+    if (import.meta.client) {
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
       const isIOSStandalone = (window.navigator as any).standalone === true;
-
-      // Verificar se tem window.chrome (indica que não é instalado no Chrome)
-      const isChromeApp =
-        !!(window as any).chrome && !(window as any).chrome.webstore;
-
+      const isChromeApp = !!(window as any).chrome && !(window as any).chrome.webstore;
       isInstalled.value = isStandalone || isIOSStandalone || isChromeApp;
     }
   };
@@ -43,7 +34,7 @@ export const usePWACustom = () => {
    * Verificar status de conexão
    */
   const checkOnlineStatus = () => {
-    if (process.client) {
+    if (import.meta.client) {
       isOnline.value = navigator.onLine;
     }
   };
