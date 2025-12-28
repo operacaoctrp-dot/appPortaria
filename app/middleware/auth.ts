@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   console.log("🛡️ Middleware auth executado para:", to.path);
 
-  if (import.meta.client) {
+  if (typeof window !== "undefined") {
     const supabase = useSupabaseClient();
 
     // Verificar se acabou de fazer login

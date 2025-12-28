@@ -22,7 +22,7 @@ export const usePWACustom = () => {
    * Verificar se está instalado como PWA
    */
   const checkIfInstalled = () => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
       const isIOSStandalone = (window.navigator as any).standalone === true;
       const isChromeApp = !!(window as any).chrome && !(window as any).chrome.webstore;
@@ -34,7 +34,7 @@ export const usePWACustom = () => {
    * Verificar status de conexão
    */
   const checkOnlineStatus = () => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       isOnline.value = navigator.onLine;
     }
   };
@@ -93,35 +93,17 @@ export const usePWACustom = () => {
    * Obter informações sobre a plataforma
    */
   const getPlatformInfo = () => {
-    if (!import.meta.client) return null;
-
+    if (typeof window === "undefined") return null;
     const userAgent = navigator.userAgent;
-
-    // Detectar plataforma
     const isIOS = /iPad|iPhone|iPod/.test(userAgent);
     const isAndroid = /Android/.test(userAgent);
     const isMobile = /Mobi|Android/i.test(userAgent);
     const isDesktop = !isMobile;
-
-    // Detectar navegador
-    const isChrome =
-      /Chrome/.test(userAgent) && /Google Inc/.test(navigator.vendor);
+    const isChrome = /Chrome/.test(userAgent) && /Google Inc/.test(navigator.vendor);
     const isFirefox = /Firefox/.test(userAgent);
-    const isSafari =
-      /Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor);
+    const isSafari = /Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor);
     const isEdge = /Edg/.test(userAgent);
-
-    return {
-      isIOS,
-      isAndroid,
-      isMobile,
-      isDesktop,
-      isChrome,
-      isFirefox,
-      isSafari,
-      isEdge,
-      supportsInstallation: (isChrome || isEdge) && !isInstalled.value,
-    };
+    return { isIOS, isAndroid, isMobile, isDesktop, isChrome, isFirefox, isSafari, isEdge, supportsInstallation: (isChrome || isEdge) && !isInstalled.value };
   };
 
   /**
@@ -172,45 +154,22 @@ export const usePWACustom = () => {
    * Registrar service worker manualmente (se necessário)
    */
   const registerServiceWorker = async () => {
-    if (!import.meta.client || !("serviceWorker" in navigator)) {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       console.log("Service Worker não é suportado");
       return false;
     }
-
     try {
       const registration = await navigator.serviceWorker.register("/sw.js");
       console.log("Service Worker registrado com sucesso:", registration);
-
-      // Verificar updates
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (newWorker) {
           newWorker.addEventListener("statechange", () => {
-            if (
-              newWorker.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              // Nova versão disponível
-              const { info } = useNotifications();
-              info(
-                "Nova versão disponível",
-                "Recarregue a página para usar a versão mais recente",
-                {
-                  persistent: true,
-                  actions: [
-                    {
-                      label: "Recarregar",
-                      primary: true,
-                      action: () => window.location.reload(),
-                    },
-                  ],
-                }
-              );
-            }
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller)
+              console.log("Nova versão do Service Worker instalada");
           });
         }
       });
-
       return true;
     } catch (error) {
       console.error("Erro ao registrar Service Worker:", error);
@@ -222,74 +181,26 @@ export const usePWACustom = () => {
    * Inicializar PWA
    */
   const initPWA = () => {
-    if (!import.meta.client) return;
-
-    // Verificar se já está instalado
-    checkIfInstalled();
-
-    // Verificar status online
-    checkOnlineStatus();
-
-    // Event listeners
+    if (typeof window === "undefined") return;
     window.addEventListener("beforeinstallprompt", (e: Event) => {
-      // Prevenir o prompt automático
       e.preventDefault();
-
-      // Salvar o evento para uso posterior
-      deferredPrompt.value = e as BeforeInstallPromptEvent;
+      const event = e as BeforeInstallPromptEvent;
+      deferredPrompt.value = event;
       isInstallable.value = true;
-
-      console.log("PWA é instalável");
-
-      // Mostrar notificação sobre instalação (opcional)
-      if (!installPromptShown.value) {
-        const { info } = useNotifications();
-        info(
-          "Instalar Aplicativo",
-          "Você pode instalar o Sistema de Portaria para acesso mais rápido",
-          {
-            actions: [
-              {
-                label: "Instalar",
-                primary: true,
-                action: showInstallPrompt,
-              },
-            ],
-          }
-        );
-        installPromptShown.value = true;
-      }
     });
-
-    // Detectar quando a app foi instalada
     window.addEventListener("appinstalled", () => {
-      console.log("PWA foi instalado");
       isInstalled.value = true;
-      isInstallable.value = false;
       deferredPrompt.value = null;
-
-      const { success } = useNotifications();
-      success(
-        "Aplicativo Instalado!",
-        "Agora você pode acessar o sistema diretamente da sua tela inicial"
-      );
+      isInstallable.value = false;
     });
-
-    // Monitorar mudanças de conectividade
     window.addEventListener("online", () => {
       isOnline.value = true;
-      const { success } = useNotifications();
-      success("Conexão Restaurada", "Você está online novamente");
     });
-
     window.addEventListener("offline", () => {
       isOnline.value = false;
-      const { warning } = useNotifications();
-      warning("Sem Conexão", "Você está trabalhando no modo offline");
     });
-
-    // Registrar service worker (se não for automático)
-    registerServiceWorker();
+    checkIfInstalled();
+    checkOnlineStatus();
   };
 
   return {

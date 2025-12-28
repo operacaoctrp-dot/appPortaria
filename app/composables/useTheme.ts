@@ -27,10 +27,8 @@ export const useTheme = () => {
    * Detectar preferência do sistema
    */
   const detectSystemTheme = () => {
-    if (import.meta.client) {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
+    if (typeof window !== "undefined") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       systemTheme.value = prefersDark ? "dark" : "light";
     }
   };
@@ -39,7 +37,7 @@ export const useTheme = () => {
    * Aplicar tema no DOM
    */
   const applyTheme = (theme: "light" | "dark") => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       const html = document.documentElement;
       if (theme === "dark") {
         html.classList.add("dark");
@@ -53,7 +51,7 @@ export const useTheme = () => {
    * Salvar tema no localStorage
    */
   const saveTheme = (theme: Theme) => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       try {
         localStorage.setItem(STORAGE_KEYS.THEME, theme);
       } catch (error) {
@@ -66,7 +64,7 @@ export const useTheme = () => {
    * Carregar tema do localStorage
    */
   const loadTheme = (): Theme => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem(STORAGE_KEYS.THEME);
         if (saved && Object.values(THEMES).includes(saved as Theme)) {
@@ -116,12 +114,11 @@ export const useTheme = () => {
    * Inicializar tema
    */
   const initTheme = () => {
-    if (import.meta.client) {
+    if (typeof window !== "undefined") {
       detectSystemTheme();
       const savedTheme = loadTheme();
       currentTheme.value = savedTheme;
-      const initialTheme =
-        savedTheme === "system" ? systemTheme.value : (savedTheme as "light" | "dark");
+      const initialTheme = savedTheme === "system" ? systemTheme.value : (savedTheme as "light" | "dark");
       applyTheme(initialTheme);
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleSystemThemeChange = (e: MediaQueryListEvent) => {

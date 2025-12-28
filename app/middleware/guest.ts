@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   console.log('  📍 De:', from?.path || 'inicial')
   console.log('  📍 Para:', to.path)
   
-  if (import.meta.client) {
+  if (typeof window !== "undefined") {
     const { user } = useAuth()
     
     console.log('👤 Estado do usuário no guest middleware:', user.value ? 'Logado' : 'Não logado')
