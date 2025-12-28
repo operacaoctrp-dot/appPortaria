@@ -89,7 +89,8 @@ export const useAuth = (): {
       }
 
       return { error: null, data };
-    } catch (error: any) {
+-    } catch (error: any) {
++    } catch (error) {
       console.error("❌ Erro capturado no catch:", (error as any));
       const appError = handleAuthError(error as AuthError, "useAuth.login");
       logger.error("❌ Erro inesperado no login:", appError?.userMessage);
