@@ -66,7 +66,7 @@ const isDark = computed(() => theme.value === "dark");
  * Alternar tema
  */
 const toggleTheme = () => {
-  if (import.meta.client) {
+  if (typeof window !== "undefined") {
     const newTheme = isDark.value ? "light" : "dark";
     setTheme(newTheme);
   }

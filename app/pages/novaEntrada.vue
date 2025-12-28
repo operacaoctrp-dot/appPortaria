@@ -1460,7 +1460,7 @@
 
 <script setup>
 import { computed, ref, nextTick, onMounted, watch } from "vue";
-import { utils, writeFile } from "xlsx";
+// xlsx import movido para importação dinâmica dentro de exportarExcel
 import {
   ExclamationTriangleIcon,
   ArrowPathIcon,
@@ -2511,6 +2511,15 @@ const exportarExcel = async () => {
   try {
     exportandoExcel.value = true;
 
+    // Garantir execução apenas no cliente e evitar SSR-unsafe imports
+    if (typeof window === "undefined") {
+      throw new Error("Exportação disponível apenas no cliente");
+    }
+
+    // Importação dinâmica para evitar problemas no SSR/Workers
+    const xlsxModule = await import("xlsx");
+    const { utils, writeFile } = xlsxModule as any;
+
     // Preparar dados para exportação
     const dadosParaExportar = colaboradoresFiltrados.value.map(
       (colaborador) => ({
@@ -2545,11 +2554,11 @@ const exportarExcel = async () => {
       `Arquivo Excel exportado com sucesso! (colaboradores_${hoje}.xlsx)`,
       "success"
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("Erro ao exportar Excel:", err);
     mostrarNotificacao(
       "Erro na Exportação",
-      "Erro ao exportar arquivo Excel. Tente novamente.",
+      `Erro ao exportar arquivo Excel. ${err?.message || "Tente novamente."}`,
       "error"
     );
   } finally {
