@@ -48,6 +48,11 @@
           <ThemeToggle />
         </div>
 
+        <!-- PWA Install (Mobile, sempre visível) -->
+        <div class="flex md:hidden items-center">
+          <PWAInstall />
+        </div>
+
         <!-- Menu Mobile -->
         <button
           @click="toggleMobileMenu"
