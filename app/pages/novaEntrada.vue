@@ -2553,7 +2553,7 @@ const exportarExcel = async () => {
       `Arquivo Excel exportado com sucesso! (colaboradores_${hoje}.xlsx)`,
       "success"
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("Erro ao exportar Excel:", err);
     mostrarNotificacao(
       "Erro na Exportação",
