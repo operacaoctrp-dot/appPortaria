@@ -26,8 +26,8 @@ export const useVisitantes = () => {
       }
 
       return data || [];
-    } catch (err: any) {
-      error.value = err.message || "Erro ao buscar visitantes";
+    } catch (err) {
+      error.value = (err as any)?.message || "Erro ao buscar visitantes";
       console.error("❌ Erro:", err);
       return [];
     } finally {
@@ -62,10 +62,10 @@ export const useVisitantes = () => {
 
       console.log("✅ Visitante criado:", data);
       return data;
-    } catch (err: any) {
-      error.value = err.message || "Erro ao criar visitante";
+    } catch (err) {
+      error.value = (err as any)?.message || "Erro ao criar visitante";
       console.error("❌ Erro:", err);
-      throw err;
+      throw err as any;
     } finally {
       loading.value = false;
     }
@@ -102,10 +102,10 @@ export const useVisitantes = () => {
 
       console.log("✅ Visitante atualizado:", data);
       return data;
-    } catch (err: any) {
-      error.value = err.message || "Erro ao atualizar visitante";
+    } catch (err) {
+      error.value = (err as any)?.message || "Erro ao atualizar visitante";
       console.error("❌ Erro:", err);
-      throw err;
+      throw err as any;
     } finally {
       loading.value = false;
     }
@@ -131,10 +131,10 @@ export const useVisitantes = () => {
 
       console.log("✅ Visitante deletado");
       return true;
-    } catch (err: any) {
-      error.value = err.message || "Erro ao deletar visitante";
+    } catch (err) {
+      error.value = (err as any)?.message || "Erro ao deletar visitante";
       console.error("❌ Erro:", err);
-      throw err;
+      throw err as any;
     } finally {
       loading.value = false;
     }

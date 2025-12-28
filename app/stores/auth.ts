@@ -136,8 +136,8 @@ export const useAuthStore = defineStore("auth", {
         }
 
         return { success: true };
-      } catch (error: any) {
-        const appError = handleAuthError(error, "AuthStore.login");
+      } catch (error) {
+        const appError = handleAuthError(error as any, "AuthStore.login");
         logger.error("Erro no login:", appError?.userMessage);
         return {
           success: false,
@@ -159,7 +159,7 @@ export const useAuthStore = defineStore("auth", {
         const { error } = await supabase.auth.signOut();
 
         if (error) {
-          const appError = handleAuthError(error, "AuthStore.logout");
+          const appError = handleAuthError(error as any, "AuthStore.logout");
           logger.error("Erro ao fazer logout:", appError?.userMessage);
         }
 
@@ -170,7 +170,7 @@ export const useAuthStore = defineStore("auth", {
         colaboradoresStore.limparDados();
 
         return { success: true };
-      } catch (error: any) {
+      } catch (error) {
         const appError = handleAuthError(error, "AuthStore.logout");
         logger.error("Erro inesperado no logout:", appError?.userMessage);
         return {
@@ -246,11 +246,12 @@ export const useAuthStore = defineStore("auth", {
         }
 
         return { success: true };
-      } catch (error: any) {
+      } catch (error) {
         console.error("Erro ao atualizar perfil:", error);
+        const e = error as any;
         return {
           success: false,
-          error: error.message || "Erro ao atualizar perfil",
+          error: e?.message || "Erro ao atualizar perfil",
         };
       } finally {
         this.loading = false;

@@ -158,8 +158,8 @@ export const useHistoricoMovimentacao = () => {
 
       console.log(`✅ ${tipo} registrada com sucesso!`);
       return { success: true };
-    } catch (err: any) {
-      const errorMessage = err.message || `Erro ao registrar ${tipo}`;
+    } catch (err) {
+      const errorMessage = (err as any).message || `Erro ao registrar ${tipo}`;
       error.value = errorMessage;
       console.error(`❌ Erro ao registrar ${tipo}:`, err);
       return { success: false, error: errorMessage };
@@ -215,8 +215,8 @@ export const useHistoricoMovimentacao = () => {
         `✅ Processadas ${movimentacoes.length} movimentações individuais`
       );
       return movimentacoes;
-    } catch (err: any) {
-      error.value = err.message || "Erro ao buscar movimentações";
+    } catch (err) {
+      error.value = (err as any).message || "Erro ao buscar movimentações";
       console.error("❌ Erro ao buscar movimentações:", err);
       return [];
     } finally {
@@ -387,7 +387,7 @@ export const useHistoricoMovimentacao = () => {
         `✅ Funcionários presentes: ${resumo.filter((r) => r.presente).length}`
       );
       return resumo;
-    } catch (err: any) {
+    } catch (err) {
       error.value = err.message || "Erro ao buscar resumo";
       console.error("❌ Erro ao buscar resumo:", err);
       return [];
@@ -535,7 +535,7 @@ export const useHistoricoMovimentacao = () => {
       );
 
       return presentes;
-    } catch (err: any) {
+    } catch (err) {
       error.value = err.message || "Erro ao buscar colaboradores presentes";
       console.error("❌ Erro ao buscar colaboradores presentes:", err);
       return [];
@@ -578,7 +578,7 @@ export const useHistoricoMovimentacao = () => {
 
       console.log("✅ Registros limpos com sucesso");
       return { success: true };
-    } catch (err: any) {
+    } catch (err) {
       error.value = err.message || "Erro ao limpar registros";
       console.error("❌ Erro ao limpar registros:", err);
       return { success: false, error: error.value || undefined };
@@ -637,8 +637,8 @@ export const useHistoricoMovimentacao = () => {
 
         return { historicos: historico || [], error: null };
       }
-    } catch (err: any) {
-      return { historicos: [], error: err.message || "Erro desconhecido" };
+    } catch (err) {
+      return { historicos: [], error: (err as any).message || "Erro desconhecido" };
     }
   };
 
@@ -756,7 +756,7 @@ export const useHistoricoMovimentacao = () => {
         logger.success("Histórico criado com sucesso");
         return { success: true };
       }
-    } catch (err: any) {
+    } catch (err) {
       logger.error("❌ Erro ao salvar histórico:", err);
       return { success: false, error: err.message };
     }

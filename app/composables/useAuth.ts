@@ -90,7 +90,7 @@ export const useAuth = (): {
 
       return { error: null, data };
     } catch (error: any) {
-      console.error("❌ Erro capturado no catch:", error);
+      console.error("❌ Erro capturado no catch:", (error as any));
       const appError = handleAuthError(error as AuthError, "useAuth.login");
       logger.error("❌ Erro inesperado no login:", appError?.userMessage);
       return { error: error as AuthError };
@@ -158,7 +158,7 @@ export const useAuth = (): {
     } catch (error) {
       const appError = handleAuthError(error as AuthError, "useAuth.logout");
       logger.error("❌ Erro inesperado no logout:", appError?.userMessage);
-      throw error;
+      throw error as any;
     } finally {
       loading.value = false;
     }
@@ -189,10 +189,10 @@ export const useAuth = (): {
 
       logger.success("Email de recuperação enviado com sucesso");
       return { error: null };
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         "❌ Erro inesperado na recuperação:",
-        error.message || error
+        (error as any).message || error
       );
       return { error: error as AuthError };
     } finally {
@@ -216,10 +216,10 @@ export const useAuth = (): {
 
       console.log("✅ Senha atualizada com sucesso!");
       return { error: null };
-    } catch (error: any) {
+    } catch (error) {
       console.error(
         "❌ Erro inesperado ao atualizar senha:",
-        error.message || error
+        (error as any).message || error
       );
       return { error: error as AuthError };
     } finally {

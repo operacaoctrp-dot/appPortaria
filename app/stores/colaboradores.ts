@@ -129,14 +129,14 @@ export const useColaboradoresStore = defineStore("colaboradores", {
         this.atualizarFuncionariosPresentes();
 
         return data;
-      } catch (error: any) {
+      } catch (error) {
         const appError = handleDatabaseError(
-          error,
+          error as any,
           "ColaboradoresStore.fetchColaboradores"
         );
         this.error = appError.userMessage;
         logger.error("Erro no store:", appError.userMessage);
-        throw error;
+        throw error as any;
       } finally {
         this.loading = false;
       }
@@ -160,13 +160,13 @@ export const useColaboradoresStore = defineStore("colaboradores", {
 
         if (error) throw error;
         return data;
-      } catch (error: any) {
+      } catch (error) {
         const appError = handleDatabaseError(
-          error,
+          error as any,
           "ColaboradoresStore.fetchColaboradorById"
         );
         logger.error("Erro ao buscar colaborador:", appError.userMessage);
-        throw error;
+        throw error as any;
       }
     },
 
@@ -192,14 +192,14 @@ export const useColaboradoresStore = defineStore("colaboradores", {
         this.invalidarCache();
 
         return data;
-      } catch (error: any) {
+      } catch (error) {
         const appError = handleDatabaseError(
-          error,
+          error as any,
           "ColaboradoresStore.criarColaborador"
         );
         this.error = appError.userMessage;
         logger.error("Erro ao criar colaborador:", appError.userMessage);
-        throw error;
+        throw error as any;
       } finally {
         this.loading = false;
       }
