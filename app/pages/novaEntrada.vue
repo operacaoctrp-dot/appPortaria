@@ -2517,8 +2517,7 @@ const exportarExcel = async () => {
     }
 
     // Importação dinâmica para evitar problemas no SSR/Workers
-    const xlsxModule = await import("xlsx");
-    const { utils, writeFile } = xlsxModule as any;
+    const { utils, writeFile } = await import("xlsx");
 
     // Preparar dados para exportação
     const dadosParaExportar = colaboradoresFiltrados.value.map(
