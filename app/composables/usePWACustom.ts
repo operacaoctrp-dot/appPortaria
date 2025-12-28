@@ -102,7 +102,7 @@ export const usePWACustom = () => {
    * Obter informações sobre a plataforma
    */
   const getPlatformInfo = () => {
-    if (!process.client) return null;
+    if (!import.meta.client) return null;
 
     const userAgent = navigator.userAgent;
 
@@ -181,7 +181,7 @@ export const usePWACustom = () => {
    * Registrar service worker manualmente (se necessário)
    */
   const registerServiceWorker = async () => {
-    if (!process.client || !("serviceWorker" in navigator)) {
+    if (!import.meta.client || !("serviceWorker" in navigator)) {
       console.log("Service Worker não é suportado");
       return false;
     }
@@ -231,7 +231,7 @@ export const usePWACustom = () => {
    * Inicializar PWA
    */
   const initPWA = () => {
-    if (!process.client) return;
+    if (!import.meta.client) return;
 
     // Verificar se já está instalado
     checkIfInstalled();

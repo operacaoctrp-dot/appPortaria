@@ -16,7 +16,7 @@ const ROUTE_PERMISSIONS: RoutePermissions = {
 export default defineNuxtRouteMiddleware((to) => {
   console.log("🛡️ Middleware authorization executado para:", to.path);
 
-  if (process.client) {
+  if (import.meta.client) {
     // Verificar se rota requer permissões especiais
     const requiredPermissions = ROUTE_PERMISSIONS[to.path] || [];
 

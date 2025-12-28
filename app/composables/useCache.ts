@@ -102,7 +102,7 @@ class SimpleCache {
 const cache = new SimpleCache();
 
 // Cleanup automático a cada 10 minutos
-if (process.client) {
+if (import.meta.client) {
   setInterval(() => {
     cache.cleanup();
   }, 10 * 60 * 1000);

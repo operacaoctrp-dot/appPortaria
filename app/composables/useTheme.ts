@@ -27,7 +27,7 @@ export const useTheme = () => {
    * Detectar preferência do sistema
    */
   const detectSystemTheme = () => {
-    if (process.client) {
+    if (import.meta.client) {
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;

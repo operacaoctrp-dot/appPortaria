@@ -66,7 +66,7 @@ const isDark = computed(() => theme.value === "dark");
  * Alternar tema
  */
 const toggleTheme = () => {
-  if (process.client) {
+  if (import.meta.client) {
     const newTheme = isDark.value ? "light" : "dark";
     setTheme(newTheme);
   }
@@ -76,19 +76,15 @@ const toggleTheme = () => {
  * Definir tema
  */
 const setTheme = (newTheme: string) => {
-  if (process.client) {
+  if (import.meta.client) {
     theme.value = newTheme;
-
     // Aplicar classe no documento
     if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-
-    // Salvar preferência
     localStorage.setItem("theme-preference", newTheme);
-
     console.log(`Tema alterado para: ${newTheme}`);
   }
 };
@@ -97,18 +93,10 @@ const setTheme = (newTheme: string) => {
  * Carregar tema salvo
  */
 const loadSavedTheme = () => {
-  if (process.client) {
-    // Verificar tema salvo
+  if (import.meta.client) {
     const saved = localStorage.getItem("theme-preference");
-
-    // Verificar preferência do sistema
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    // Determinar tema inicial
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initialTheme = saved || (prefersDark ? "dark" : "light");
-
     setTheme(initialTheme);
   }
 };
@@ -117,11 +105,9 @@ const loadSavedTheme = () => {
  * Observar mudanças na preferência do sistema
  */
 const watchSystemTheme = () => {
-  if (process.client) {
+  if (import.meta.client) {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
     mediaQuery.addEventListener("change", (e) => {
-      // Só mudar automaticamente se não houver preferência salva
       const saved = localStorage.getItem("theme-preference");
       if (!saved) {
         setTheme(e.matches ? "dark" : "light");
