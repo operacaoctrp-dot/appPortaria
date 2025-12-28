@@ -286,6 +286,7 @@ export const useHistoricoMovimentacao = () => {
 
   /**
    * Busca resumo dos colaboradores em um dia específico
+   * MODIFICADO: Considera presente se tiver qualquer entrada sem saída, independente do dia
    */
   const buscarResumoColaboradoresDia = async (
     data: string
@@ -296,14 +297,7 @@ export const useHistoricoMovimentacao = () => {
     try {
       console.log(`📊 Buscando resumo do dia: ${data}`);
 
-      const hoje = new Date().toISOString().split("T")[0];
-      const ehHoje = data === hoje;
-
-      console.log(`📅 É hoje? ${ehHoje} (hoje: ${hoje}, data: ${data})`);
-
-      let registros: any[] = [];
-
-      // SEMPRE buscar do histórico, pois é lá que as entradas/saídas são registradas
+      // Buscar registros do dia selecionado
       console.log("🗄️ Buscando da tabela colaboradores_historico...");
       const { data: historico, error: fetchError } = await supabaseAny
         .from("colaboradores_historico")
@@ -317,30 +311,55 @@ export const useHistoricoMovimentacao = () => {
         throw fetchError;
       }
 
-      registros = historico || [];
-      console.log(`📋 Encontrados ${registros.length} registros no histórico`);
+      const registros = historico || [];
+      console.log(
+        `📋 Encontrados ${registros.length} registros no histórico do dia ${data}`
+      );
 
-      const resumo = registros.map((registro) => {
+      // Para cada colaborador do dia, buscar TODOS os seus registros históricos
+      // para determinar se está presente (tem entrada sem saída)
+      const resumoPromises = registros.map(async (registro) => {
+        const colaboradorId = registro.colaborador_id || registro.id;
+
+        // Buscar TODOS os registros históricos deste colaborador
+        const { data: todosRegistros, error: fetchAllError } = await supabaseAny
+          .from("colaboradores_historico")
+          .select("*")
+          .eq("colaborador_id", colaboradorId)
+          .eq("origem", "principal")
+          .order("data_registro", { ascending: true });
+
+        if (fetchAllError) {
+          console.error(`❌ Erro ao buscar histórico completo:`, fetchAllError);
+        }
+
+        // Contar TODAS as entradas e saídas do colaborador (todos os dias)
+        let totalEntradas = 0;
+        let totalSaidas = 0;
+
+        (todosRegistros || []).forEach((reg) => {
+          for (let i = 1; i <= 5; i++) {
+            if (reg[`ent${i}`]) totalEntradas++;
+            if (reg[`sai${i}`]) totalSaidas++;
+          }
+        });
+
+        // Coletar entradas/saídas do dia específico (para exibição)
         const entradas: string[] = [];
         const saidas: string[] = [];
 
-        // Coletar entradas
         for (let i = 1; i <= 5; i++) {
-          const campo = `ent${i}` as keyof typeof registro;
-          if (registro[campo]) entradas.push(registro[campo]);
+          const campoEnt = `ent${i}` as keyof typeof registro;
+          const campoSai = `sai${i}` as keyof typeof registro;
+          if (registro[campoEnt]) entradas.push(registro[campoEnt]);
+          if (registro[campoSai]) saidas.push(registro[campoSai]);
         }
 
-        // Coletar saídas
-        for (let i = 1; i <= 5; i++) {
-          const campo = `sai${i}` as keyof typeof registro;
-          if (registro[campo]) saidas.push(registro[campo]);
-        }
-
-        // Está presente se tem mais entradas que saídas
-        const presente = entradas.length > saidas.length;
+        // Está presente se tem mais entradas que saídas (considerando TODOS os registros)
+        const presente = totalEntradas > totalSaidas;
 
         const resumoColaborador = {
-          colaborador_id: registro.colaborador_id || registro.id,
+          colaborador_id: colaboradorId,
           nome: registro.nome || "Sem nome",
           funcao: registro.funcao,
           filial: registro.filial,
@@ -351,27 +370,17 @@ export const useHistoricoMovimentacao = () => {
         };
 
         console.log(`📝 Resumo de ${resumoColaborador.nome}:`, {
-          entradas: entradas.length,
-          saidas: saidas.length,
+          entradasDia: entradas.length,
+          saidasDia: saidas.length,
+          totalEntradasHistorico: totalEntradas,
+          totalSaidasHistorico: totalSaidas,
           presente,
-          campos_entrada: {
-            ent1: registro.ent1,
-            ent2: registro.ent2,
-            ent3: registro.ent3,
-            ent4: registro.ent4,
-            ent5: registro.ent5,
-          },
-          campos_saida: {
-            sai1: registro.sai1,
-            sai2: registro.sai2,
-            sai3: registro.sai3,
-            sai4: registro.sai4,
-            sai5: registro.sai5,
-          },
         });
 
         return resumoColaborador;
       });
+
+      const resumo = await Promise.all(resumoPromises);
 
       console.log(`✅ Resumo processado: ${resumo.length} colaboradores`);
       console.log(
@@ -381,6 +390,154 @@ export const useHistoricoMovimentacao = () => {
     } catch (err: any) {
       error.value = err.message || "Erro ao buscar resumo";
       console.error("❌ Erro ao buscar resumo:", err);
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Busca TODOS os colaboradores presentes (independente do dia)
+   * Considera presente se tiver entrada sem saída em qualquer dia
+   */
+  const buscarTodosColaboradoresPresentes = async (
+    origem: string = "principal"
+  ): Promise<ResumoColaboradorDia[]> => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      console.log(
+        `📊 Buscando TODOS os colaboradores presentes (origem: ${origem})...`
+      );
+
+      // Buscar todos os colaboradores únicos que têm registros no histórico
+      const { data: todosRegistros, error: fetchError } = await supabaseAny
+        .from("colaboradores_historico")
+        .select("colaborador_id, nome, funcao, filial, matricula")
+        .eq("origem", origem)
+        .order("nome", { ascending: true });
+
+      if (fetchError) {
+        console.error("❌ Erro ao buscar histórico:", fetchError);
+        throw fetchError;
+      }
+
+      // Remover duplicados (mesmo colaborador pode ter vários registros)
+      const colaboradoresUnicos = new Map();
+      (todosRegistros || []).forEach((reg) => {
+        const id = reg.colaborador_id;
+        if (!colaboradoresUnicos.has(id)) {
+          colaboradoresUnicos.set(id, reg);
+        }
+      });
+
+      console.log(
+        `📋 Encontrados ${colaboradoresUnicos.size} colaboradores únicos`
+      );
+
+      // Para cada colaborador, verificar se está presente
+      const resumoPromises = Array.from(colaboradoresUnicos.values()).map(
+        async (colaborador) => {
+          const colaboradorId = colaborador.colaborador_id;
+
+          // Buscar TODOS os registros históricos deste colaborador
+          const { data: registrosColab, error: fetchAllError } =
+            await supabaseAny
+              .from("colaboradores_historico")
+              .select("*")
+              .eq("colaborador_id", colaboradorId)
+              .eq("origem", origem)
+              .order("data_registro", { ascending: false });
+
+          if (fetchAllError) {
+            console.error(
+              `❌ Erro ao buscar histórico completo:`,
+              fetchAllError
+            );
+          }
+
+          // Verificar se existe entrada sem saída correspondente em QUALQUER dia
+          let ultimaEntradaData: string | null = null;
+          let ultimaEntradaHora: string | null = null;
+          let presente = false;
+
+          // Processar registros dia por dia (já vêm ordenados do mais recente para o mais antigo)
+          for (const reg of registrosColab || []) {
+            let entradasNoDia = 0;
+            let saidasNoDia = 0;
+            const entradasHorarios: string[] = [];
+            const saidasHorarios: string[] = [];
+
+            // Contar entradas e saídas neste dia específico
+            for (let i = 1; i <= 5; i++) {
+              if (reg[`ent${i}`]) {
+                entradasNoDia++;
+                entradasHorarios.push(reg[`ent${i}`]);
+              }
+              if (reg[`sai${i}`]) {
+                saidasNoDia++;
+                saidasHorarios.push(reg[`sai${i}`]);
+              }
+            }
+
+            // Se neste dia tem mais entradas que saídas, o colaborador está presente
+            if (entradasNoDia > saidasNoDia) {
+              presente = true;
+              // Guardar a data e hora da PRIMEIRA entrada do dia (menor horário)
+              if (!ultimaEntradaHora && entradasHorarios.length > 0) {
+                // Ordenar horários para pegar o primeiro (menor horário)
+                entradasHorarios.sort();
+                ultimaEntradaHora = entradasHorarios[0]; // Primeira entrada do dia
+                ultimaEntradaData = reg.data_registro;
+              }
+              break; // Já encontramos, não precisa continuar
+            }
+          }
+
+          const resumoColaborador = {
+            colaborador_id: colaboradorId,
+            nome: colaborador.nome || "Sem nome",
+            funcao: colaborador.funcao,
+            filial: colaborador.filial,
+            matricula: colaborador.matricula,
+            entradas: [],
+            saidas: [],
+            presente,
+            data_entrada: ultimaEntradaData,
+            hora_entrada: ultimaEntradaHora,
+          };
+
+          console.log(`📝 ${resumoColaborador.nome}:`, {
+            presente,
+            dataEntrada: ultimaEntradaData,
+            horaEntrada: ultimaEntradaHora,
+          });
+
+          return resumoColaborador;
+        }
+      );
+
+      const todosResumos = await Promise.all(resumoPromises);
+
+      // Filtrar apenas os presentes
+      const presentes = todosResumos.filter((r) => r.presente);
+
+      console.log(`✅ Total colaboradores: ${todosResumos.length}`);
+      console.log(`✅ Funcionários presentes: ${presentes.length}`);
+      console.log(
+        `✅ Presentes detalhado:`,
+        presentes.map((p) => ({
+          nome: p.nome,
+          data_entrada: p.data_entrada,
+          presente: p.presente,
+        }))
+      );
+
+      return presentes;
+    } catch (err: any) {
+      error.value = err.message || "Erro ao buscar colaboradores presentes";
+      console.error("❌ Erro ao buscar colaboradores presentes:", err);
       return [];
     } finally {
       loading.value = false;
@@ -611,6 +768,7 @@ export const useHistoricoMovimentacao = () => {
     registrarMovimentacao,
     buscarMovimentacoesDia,
     buscarResumoColaboradoresDia,
+    buscarTodosColaboradoresPresentes,
     limparRegistrosDiaAtual,
     // Adicionar novas funções para compatibilidade com novaEntrada.vue
     buscarHistoricoPorData,

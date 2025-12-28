@@ -507,13 +507,13 @@ const goToRecuperarSenha = () => {
     console.log("⚠️ Navegação já em andamento, ignorando clique");
     return;
   }
-  
+
   isNavigating.value = true;
   console.log("🔑 Navegando para /recuperar-senha usando window.location");
-  
+
   // Usar navegação nativa diretamente
   window.location.href = "/recuperar-senha";
-  
+
   setTimeout(() => {
     isNavigating.value = false;
   }, 1000);
@@ -522,38 +522,85 @@ const goToRecuperarSenha = () => {
 // Função de login com validações
 const handleLogin = async () => {
   try {
+    console.log("🔐 Iniciando processo de login...");
+    console.log("📱 User Agent:", navigator.userAgent);
+    console.log("🌐 Online:", navigator.onLine);
+
     // Limpar erros anteriores
     error.value = "";
     emailError.value = "";
     passwordError.value = "";
 
+    // Verificar conexão com internet
+    if (!navigator.onLine) {
+      error.value = "Sem conexão com a internet. Verifique sua rede.";
+      console.error("❌ Dispositivo offline");
+      return;
+    }
+
     // Validar campos
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
+    console.log("📋 Validações:", { isEmailValid, isPasswordValid });
+
     // Se houver erros de validação, não prosseguir
     if (!isEmailValid || !isPasswordValid) {
+      console.log("❌ Validação falhou, abortando login");
       return;
     }
 
+    console.log("🔄 Chamando função de login do Supabase...");
+
+    // Mostrar alerta no mobile para debug
+    if (window.innerWidth < 768) {
+      console.log("📱 Dispositivo móvel detectado");
+    }
+
     // Tentar fazer login
-    const { error: loginError } = await login(
+    const { error: loginError, data } = await login(
       loginForm.value.email.trim(),
       loginForm.value.password
     );
 
+    console.log("📥 Resposta do login:", loginError ? "ERRO" : "SUCESSO");
+
+    if (data) {
+      console.log("📦 Dados recebidos:", {
+        hasUser: !!data.user,
+        hasSession: !!data.session,
+        userEmail: data.user?.email,
+      });
+    }
+
     if (loginError) {
       // Traduzir erros comuns do Supabase
       console.error("🔴 Erro de login:", loginError.message);
-      
-      // Verificar se é erro de configuração do Supabase
-      if (loginError.message?.includes("Invalid API key") || 
-          loginError.message?.includes("JWT") ||
-          loginError.message?.includes("fetch")) {
-        error.value = "⚠️ Erro de configuração do Supabase. Verifique as credenciais no arquivo .env";
+
+      // Erro de rede/conexão
+      if (
+        loginError.message?.includes("fetch") ||
+        loginError.message?.includes("Failed to fetch") ||
+        loginError.message?.includes("NetworkError") ||
+        loginError.message?.includes("ECONNREFUSED")
+      ) {
+        error.value =
+          "Erro de conexão. Verifique sua internet e tente novamente.";
+        console.error("🌐 Problema de rede detectado");
         return;
       }
-      
+
+      // Verificar se é erro de configuração do Supabase
+      if (
+        loginError.message?.includes("Invalid API key") ||
+        loginError.message?.includes("JWT") ||
+        loginError.message?.includes("fetch")
+      ) {
+        error.value =
+          "⚠️ Erro de configuração do Supabase. Verifique as credenciais no arquivo .env";
+        return;
+      }
+
       switch (loginError.message) {
         case "Invalid login credentials":
           error.value =
@@ -588,13 +635,37 @@ const handleLogin = async () => {
       emailError.value = "";
       passwordError.value = "";
 
-      // Redirecionar para a página principal
-      await navigateTo("/");
+      console.log("✅ Login bem-sucedido!");
+      console.log("💾 Marcando login como concluído...");
+
+      // Marcar que acabamos de fazer login
+      sessionStorage.setItem("justLoggedIn", "true");
+      sessionStorage.setItem("loginTimestamp", Date.now().toString());
+
+      console.log(
+        "⏳ Aguardando 1.5 segundos para garantir persistência da sessão..."
+      );
+
+      // Aguardar tempo suficiente para a sessão ser salva no localStorage/cookies
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      console.log("🔄 Redirecionando para página principal...");
+
+      // Forçar redirecionamento completo
+      window.location.replace("/");
     }
   } catch (err) {
     console.error("🔴 Erro crítico no login:", err);
-    const errorMessage = err && typeof err === 'object' && 'message' in err ? err.message : "Erro inesperado no servidor. Tente novamente em alguns instantes";
+    const errorMessage =
+      err && typeof err === "object" && "message" in err
+        ? err.message
+        : "Erro inesperado no servidor. Tente novamente em alguns instantes";
     error.value = errorMessage;
+
+    // Debug em mobile
+    if (window.innerWidth < 768) {
+      alert("ERRO: " + errorMessage);
+    }
   }
 };
 
@@ -643,7 +714,7 @@ const handleRegister = async () => {
       // Registro bem-sucedido
       registerSuccess.value = true;
       error.value = "";
-      
+
       // Limpar formulário
       registerForm.value = {
         email: "",
@@ -653,7 +724,8 @@ const handleRegister = async () => {
     }
   } catch (err) {
     console.error("Erro no registro:", err);
-    error.value = "Erro inesperado no servidor. Tente novamente em alguns instantes";
+    error.value =
+      "Erro inesperado no servidor. Tente novamente em alguns instantes";
   }
 };
 </script>

@@ -17,12 +17,27 @@ export default defineNuxtConfig({
   // Configuração do servidor dev
   devServer: {
     port: 3001,
+    host: "0.0.0.0", // Permite acesso pela rede local
   },
 
   // Configuração do Supabase
   supabase: {
     url: process.env.NUXT_PUBLIC_SUPABASE_URL,
     key: process.env.NUXT_PUBLIC_SUPABASE_KEY,
+    cookieOptions: {
+      secure: false, // Para desenvolvimento HTTP
+      sameSite: "lax",
+    },
+    clientOptions: {
+      auth: {
+        flowType: "pkce",
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        storage:
+          typeof window !== "undefined" ? window.localStorage : undefined,
+      },
+    },
     redirectOptions: {
       login: "/login",
       callback: "/confirm",

@@ -37,24 +37,60 @@ export const useAuth = (): {
     loading.value = true;
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      console.log("🔐 useAuth.login: Tentando autenticar...");
+      console.log("📧 Email:", email);
+      console.log("🌐 Supabase URL:", supabase.supabaseUrl);
+
+      // Criar promise com timeout
+      const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Timeout na conexão com servidor")),
+          15000
+        )
+      );
+
+      const { data, error } = (await Promise.race([
+        loginPromise,
+        timeoutPromise,
+      ])) as any;
+
+      console.log("📥 Resposta do Supabase:", {
+        temUsuario: !!data?.user,
+        temSessao: !!data?.session,
+        temErro: !!error,
       });
 
       if (error) {
         const appError = handleAuthError(error, "useAuth.login");
         logger.error("❌ Erro no login:", appError?.userMessage);
+        console.error("❌ Erro completo:", error);
         return { error };
       }
 
       if (data.user) {
         user.value = data.user;
+        console.log("✅ Usuário definido no estado:", data.user.email);
+        console.log("🔑 Session token existe:", !!data.session?.access_token);
+        console.log(
+          "🔑 Access token:",
+          data.session?.access_token?.substring(0, 20) + "..."
+        );
+        console.log(
+          "🔑 Refresh token:",
+          data.session?.refresh_token?.substring(0, 20) + "..."
+        );
+
         logger.success("Login realizado com sucesso");
       }
 
-      return { error: null };
+      return { error: null, data };
     } catch (error: any) {
+      console.error("❌ Erro capturado no catch:", error);
       const appError = handleAuthError(error as AuthError, "useAuth.login");
       logger.error("❌ Erro inesperado no login:", appError?.userMessage);
       return { error: error as AuthError };

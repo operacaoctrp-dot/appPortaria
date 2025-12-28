@@ -222,7 +222,7 @@
             </span>
           </h3>
           <BaseButton
-            @click="carregarMovimentacoesDia"
+            @click="carregarColaboradoresPresentes"
             variant="outline"
             size="sm"
             :icon="ArrowPathIcon"
@@ -230,6 +230,34 @@
             Atualizar
           </BaseButton>
         </div>
+
+        <!-- Abas -->
+        <div class="flex border-b border-neutral-200 mb-6">
+          <button
+            @click="abaFuncionariosPresentes = 'cards'"
+            :class="[
+              'px-4 py-2 font-medium text-sm transition-colors',
+              abaFuncionariosPresentes === 'cards'
+                ? 'border-b-2 border-primary-500 text-primary-600'
+                : 'text-neutral-600 hover:text-neutral-800',
+            ]"
+          >
+            Cards
+          </button>
+          <button
+            @click="abaFuncionariosPresentes = 'lista'"
+            :class="[
+              'px-4 py-2 font-medium text-sm transition-colors',
+              abaFuncionariosPresentes === 'lista'
+                ? 'border-b-2 border-primary-500 text-primary-600'
+                : 'text-neutral-600 hover:text-neutral-800',
+            ]"
+          >
+            Lista de Presença
+          </button>
+        </div>
+
+        <!-- Conteúdo vazio -->
         <div
           v-if="funcionariosPresentes.length === 0"
           class="text-neutral-500 text-center py-12 flex flex-col items-center"
@@ -242,58 +270,153 @@
             Os funcionários aparecerão aqui após registrar entrada
           </p>
         </div>
+
+        <!-- Aba: Cards -->
         <div
-          v-else
-          class="grid gap-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          v-else-if="abaFuncionariosPresentes === 'cards'"
+          class="grid gap-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
         >
           <div
             v-for="funcionario in funcionariosPresentes"
             :key="funcionario.id"
-            class="border border-neutral-200 rounded-lg p-2.5 hover:shadow-md transition-all duration-200 hover:border-primary-300 bg-white"
+            class="border border-neutral-200 rounded-lg p-2 hover:shadow-md transition-all duration-200 hover:border-primary-300 bg-white"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1 min-w-0">
                 <h4
-                  class="font-semibold text-secondary-800 flex items-center text-sm truncate"
+                  class="font-semibold text-secondary-800 flex items-center text-xs truncate"
                 >
                   <UserIcon
-                    class="h-3.5 w-3.5 mr-1.5 text-primary-500 flex-shrink-0"
+                    class="h-3 w-3 mr-1 text-primary-500 flex-shrink-0"
                   />
                   {{ funcionario.nome }}
                 </h4>
+
+                <!-- Badge de origem -->
+                <div class="mt-1">
+                  <span
+                    v-if="funcionario.origem === 'transportadoras'"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-800"
+                  >
+                    🚚 Transportadora
+                  </span>
+                  <span
+                    v-else-if="funcionario.origem === 'sfl'"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-800"
+                  >
+                    🏢 SFL
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800"
+                  >
+                    🔥 Incinerador
+                  </span>
+                </div>
+
                 <p
-                  class="text-secondary-600 flex items-center mt-0.5 text-xs truncate"
+                  class="text-secondary-600 flex items-center mt-0.5 text-[11px] truncate"
                 >
                   <BriefcaseIcon
-                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                    class="h-2.5 w-2.5 mr-1 text-neutral-400 flex-shrink-0"
                   />
                   {{ funcionario.cargo }}
                 </p>
                 <p
                   v-if="funcionario.matricula"
-                  class="text-neutral-500 mt-0.5 flex items-center text-xs"
+                  class="text-neutral-500 mt-0.5 flex items-center text-[11px]"
                 >
                   <DocumentTextIcon
-                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                    class="h-2.5 w-2.5 mr-1 text-neutral-400 flex-shrink-0"
                   />
                   Mat: {{ funcionario.matricula }}
                 </p>
-                <p class="text-neutral-500 mt-1 flex items-center text-xs">
+                <p
+                  v-if="
+                    funcionario.origem === 'transportadoras' &&
+                    funcionario.filial
+                  "
+                  class="text-neutral-500 mt-0.5 flex items-center text-[11px]"
+                >
+                  🏭 {{ funcionario.filial }}
+                </p>
+                <p
+                  class="text-neutral-500 mt-0.5 flex items-center text-[11px]"
+                >
                   <ClockIcon
-                    class="h-3 w-3 mr-1.5 text-neutral-400 flex-shrink-0"
+                    class="h-2.5 w-2.5 mr-1 text-neutral-400 flex-shrink-0"
                   />
                   {{ formatarHora(funcionario.horaEntrada) }}
                 </p>
+                <p
+                  v-if="funcionario.dataEntrada"
+                  class="text-neutral-500 mt-0.5 flex items-center text-[11px]"
+                >
+                  📅 {{ formatarDataCompleta(funcionario.dataEntrada) }}
+                </p>
               </div>
-              <div class="ml-1.5 flex flex-col items-center flex-shrink-0">
+              <div class="ml-1 flex flex-col items-center flex-shrink-0">
                 <div
                   class="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse"
                 ></div>
-                <span class="text-[10px] text-success-600 font-medium mt-0.5"
+                <span class="text-[9px] text-success-600 font-medium mt-0.5"
                   >Online</span
                 >
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Aba: Lista com Checkbox -->
+        <div v-else-if="abaFuncionariosPresentes === 'lista'" class="space-y-2">
+          <div
+            v-for="funcionario in funcionariosPresentes"
+            :key="funcionario.id"
+            class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
+          >
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-secondary-800">
+                  {{ funcionario.nome }}
+                </span>
+                <span
+                  v-if="funcionario.origem === 'transportadoras'"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800"
+                >
+                  🚚 Transportadora
+                </span>
+                <span
+                  v-else-if="funcionario.origem === 'sfl'"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800"
+                >
+                  🏢 SFL
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800"
+                >
+                  🔥 Incinerador
+                </span>
+              </div>
+              <div
+                class="flex items-center gap-3 mt-1 text-xs text-neutral-600"
+              >
+                <span>{{ funcionario.cargo }}</span>
+                <span
+                  v-if="
+                    funcionario.origem === 'transportadoras' &&
+                    funcionario.filial
+                  "
+                >
+                  🏭 {{ funcionario.filial }}
+                </span>
+                <span>⏰ {{ formatarHora(funcionario.horaEntrada) }}</span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              class="w-5 h-5 text-primary-600 border-neutral-300 rounded focus:ring-2 focus:ring-primary-500 cursor-pointer"
+            />
           </div>
         </div>
       </div>
@@ -1078,6 +1201,7 @@ const {
   registrarMovimentacao,
   buscarMovimentacoesDia,
   buscarResumoColaboradoresDia,
+  buscarTodosColaboradoresPresentes,
   loading: loadingHistorico,
   error: errorHistorico,
 } = useHistoricoMovimentacao();
@@ -1138,6 +1262,10 @@ const saidaForm = ref({
 const dataSelecionada = ref(new Date().toISOString().split("T")[0]);
 const movimentacoesDia = ref([]);
 const resumoDia = ref([]);
+const colaboradoresPresentes = ref([]); // Lista global de colaboradores presentes (Principal + SFL)
+const colaboradoresPresentesPrincipal = ref([]); // Lista de colaboradores presentes (Principal)
+const colaboradoresPresentesSFL = ref([]); // Lista de colaboradores presentes (SFL)
+const abaFuncionariosPresentes = ref("cards"); // Controle de aba: 'cards' ou 'lista'
 
 const historico = computed(() => {
   // Usar movimentacoesDia que vem do composable
@@ -1158,74 +1286,13 @@ const abasHistorico = [
   { nome: "📋 Relatórios", icone: "reports" },
 ];
 
-// Funcionários que estão presentes (baseado no histórico de movimentações do dia)
-const funcionariosPresentes = computed(() => {
-  console.log("🔍 Calculando funcionários presentes...");
-  console.log(
-    "📊 Resumo do dia completo:",
-    JSON.stringify(resumoDia.value, null, 2)
-  );
-
-  if (!resumoDia.value || resumoDia.value.length === 0) {
-    console.log("⚪ Nenhum resumo disponível");
-    return [];
-  }
-
-  console.log(`📋 Total de registros no resumo: ${resumoDia.value.length}`);
-
-  // Filtrar colaboradores que têm entrada sem saída (estão presentes)
-  const presentes = resumoDia.value
-    .filter((resumo) => {
-      // Verificar se está presente (campo presente === true OU tem mais entradas que saídas)
-      const temEntradas = resumo.entradas && resumo.entradas.length > 0;
-      const temSaidas = resumo.saidas && resumo.saidas.length > 0;
-      const maisEntradasQueSaidas =
-        temEntradas &&
-        (!temSaidas || resumo.entradas.length > resumo.saidas.length);
-      const estaPresente = resumo.presente || maisEntradasQueSaidas;
-
-      console.log(
-        `👤 ${resumo.nome}:`,
-        `\n   - Entradas: ${
-          resumo.entradas?.length || 0
-        } (${resumo.entradas?.join(", ")})`,
-        `\n   - Saídas: ${resumo.saidas?.length || 0} (${resumo.saidas?.join(
-          ", "
-        )})`,
-        `\n   - Campo presente: ${resumo.presente}`,
-        `\n   - Está presente? ${estaPresente}`
-      );
-      return estaPresente;
-    })
-    .map((resumo) => {
-      // Pegar a última (mais recente) entrada
-      const ultimaEntrada =
-        resumo.entradas && resumo.entradas.length > 0
-          ? resumo.entradas[resumo.entradas.length - 1]
-          : null;
-
-      return {
-        id: resumo.colaborador_id,
-        nome: resumo.nome,
-        cargo: resumo.funcao || "Não informado",
-        horaEntrada: ultimaEntrada ? new Date(ultimaEntrada) : new Date(),
-        matricula: resumo.matricula || null,
-        filial: resumo.filial || null,
-      };
-    });
-
-  console.log(`✅ Total de funcionários presentes: ${presentes.length}`);
-  console.log(
-    `👥 Funcionários presentes:`,
-    presentes.map((f) => f.nome).join(", ")
-  );
-  return presentes;
-});
+// Alias para compatibilidade com o template
+const funcionariosPresentes = colaboradoresPresentes;
 
 // Funcionário selecionado no formulário de saída
 const funcionarioSelecionado = computed(() => {
   if (!saidaForm.value.funcionarioId) return null;
-  return funcionariosPresentes.value.find(
+  return colaboradoresPresentes.value.find(
     (f) => f.id === parseInt(saidaForm.value.funcionarioId)
   );
 });
@@ -1390,6 +1457,18 @@ const registrarEntrada = async () => {
       return;
     }
 
+    // Verificar se o colaborador já está presente
+    const jaEstaPresente = colaboradoresPresentes.value.some(
+      (c) => c.id === colaborador.id
+    );
+
+    if (jaEstaPresente) {
+      alert(
+        `❌ ${nome} já está presente! Por favor, registre a saída antes de registrar uma nova entrada.`
+      );
+      return;
+    }
+
     // Registrar movimentação usando o novo composable
     const resultado = await registrarMovimentacao(colaborador.id, "entrada");
 
@@ -1401,18 +1480,21 @@ const registrarEntrada = async () => {
 
       // Recarregar dados para atualizar o card de funcionários presentes
       await carregarMovimentacoesDia();
+      await carregarColaboradoresPresentes(); // Atualizar lista global
       await buscarColaboradores();
     } else {
       console.error(`❌ Erro: ${resultado.error}`);
+      alert(`Erro ao registrar entrada: ${resultado.error}`);
     }
   } catch (err) {
     console.error("Erro ao registrar entrada:", err);
+    alert("Erro ao registrar entrada. Tente novamente.");
   }
 };
 
 const registrarSaida = async () => {
   const funcionarioId = parseInt(saidaForm.value.funcionarioId);
-  const funcionario = funcionariosPresentes.value.find(
+  const funcionario = colaboradoresPresentes.value.find(
     (f) => f.id === funcionarioId
   );
 
@@ -1430,6 +1512,7 @@ const registrarSaida = async () => {
 
       // Recarregar dados para atualizar o card de funcionários presentes
       await carregarMovimentacoesDia();
+      await carregarColaboradoresPresentes(); // Atualizar lista global
       await buscarColaboradores();
     } else {
       console.error(`❌ Erro: ${resultado.error}`);
@@ -1457,6 +1540,13 @@ const calcularTempoRelativo = (data) => {
 };
 
 const formatarDataCompleta = (data) => {
+  if (!data) return "-";
+
+  // Se for string no formato YYYY-MM-DD, adicionar hora para evitar problema de timezone
+  if (typeof data === "string" && data.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    data = data + "T12:00:00"; // Adicionar meio-dia para evitar mudança de dia
+  }
+
   const date = new Date(data);
   return date.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -1469,10 +1559,27 @@ const formatarHora = (data) => {
   if (!data) return "-";
 
   try {
+    // Se for string no formato ISO com timezone (ex: 2025-11-16T05:20:00+00:00)
+    if (typeof data === "string") {
+      // Extrair HH:MM diretamente da string sem conversão de timezone
+      const timeMatch = data.match(/T(\d{2}):(\d{2})/);
+      if (timeMatch) {
+        return `${timeMatch[1]}:${timeMatch[2]}`;
+      }
+
+      // Fallback: tentar como data normal
+      const date = new Date(data);
+      if (isNaN(date.getTime())) return "-";
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      return `${hours}:${minutes}`;
+    }
+
+    // Se for objeto Date
     const date = new Date(data);
-    // Usar UTC para evitar conversão de timezone, já que o banco armazena correto
-    const hours = date.getUTCHours().toString().padStart(2, "0");
-    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+    if (isNaN(date.getTime())) return "-";
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   } catch {
     return "-";
@@ -1504,6 +1611,84 @@ const carregarMovimentacoesDia = async () => {
   }
 };
 
+// Função para carregar TODOS os colaboradores presentes (independente do dia)
+const carregarColaboradoresPresentes = async () => {
+  try {
+    console.log(
+      "👥 Carregando colaboradores presentes (Principal + SFL + Transportadoras)..."
+    );
+
+    // Buscar de todas as origens
+    const [presentesPrincipal, presentesSFL, presentesTransportadoras] =
+      await Promise.all([
+        buscarTodosColaboradoresPresentes("principal"),
+        buscarTodosColaboradoresPresentes("sfl"),
+        buscarTodosColaboradoresPresentes("transportadoras"),
+      ]);
+
+    // Mapear Principal
+    colaboradoresPresentesPrincipal.value = presentesPrincipal.map((resumo) => {
+      const horaEntrada = resumo.hora_entrada || null;
+      return {
+        id: resumo.colaborador_id,
+        nome: resumo.nome,
+        cargo: resumo.funcao || "Não informado",
+        horaEntrada: horaEntrada,
+        dataEntrada: resumo.data_entrada || null,
+        matricula: resumo.matricula || null,
+        filial: resumo.filial || null,
+        origem: "principal",
+      };
+    });
+
+    // Mapear SFL
+    colaboradoresPresentesSFL.value = presentesSFL.map((resumo) => {
+      const horaEntrada = resumo.hora_entrada || null;
+      return {
+        id: resumo.colaborador_id,
+        nome: resumo.nome,
+        cargo: resumo.funcao || "Não informado",
+        horaEntrada: horaEntrada,
+        dataEntrada: resumo.data_entrada || null,
+        matricula: resumo.matricula || null,
+        filial: resumo.filial || null,
+        origem: "sfl",
+      };
+    });
+
+    // Mapear Transportadoras
+    const colaboradoresPresentesTransportadoras = presentesTransportadoras.map(
+      (resumo) => {
+        const horaEntrada = resumo.hora_entrada || null;
+        return {
+          id: resumo.colaborador_id,
+          nome: resumo.nome,
+          cargo: resumo.funcao || "Não informado",
+          horaEntrada: horaEntrada,
+          dataEntrada: resumo.data_entrada || null,
+          matricula: null, // Transportadoras não têm matrícula
+          filial: resumo.filial || null, // Empresa
+          origem: "transportadoras",
+        };
+      }
+    );
+
+    // Combinar todas as listas
+    colaboradoresPresentes.value = [
+      ...colaboradoresPresentesPrincipal.value,
+      ...colaboradoresPresentesSFL.value,
+      ...colaboradoresPresentesTransportadoras,
+    ];
+
+    console.log(
+      `✅ Colaboradores presentes carregados: ${colaboradoresPresentes.value.length} (Principal: ${colaboradoresPresentesPrincipal.value.length}, SFL: ${colaboradoresPresentesSFL.value.length}, Transportadoras: ${colaboradoresPresentesTransportadoras.length})`
+    );
+  } catch (err) {
+    console.error("❌ Erro ao carregar colaboradores presentes:", err);
+    colaboradoresPresentes.value = [];
+  }
+};
+
 // Atualizar quando mudar a data
 watch(dataSelecionada, async () => {
   await carregarMovimentacoesDia();
@@ -1519,12 +1704,14 @@ onMounted(async () => {
     // Aguardar um pouco para garantir que tudo está pronto
     await nextTick();
     await carregarMovimentacoesDia();
+    await carregarColaboradoresPresentes(); // Carregar lista global de presentes
     console.log("✅ Dados iniciais carregados com sucesso");
 
     // Auto-refresh a cada 10 segundos para atualizar funcionários presentes
     const intervalId = setInterval(async () => {
       console.log("🔄 Auto-refresh: atualizando dados...");
       await carregarMovimentacoesDia();
+      await carregarColaboradoresPresentes(); // Atualizar lista global de presentes
     }, 10000); // 10 segundos
 
     // Limpar interval quando o componente for desmontado

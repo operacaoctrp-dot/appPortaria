@@ -29,7 +29,7 @@
               : 'border-transparent text-neutral-600 hover:text-primary-600 hover:bg-neutral-50',
           ]"
         >
-          📋 Principal
+          🔥 Incinerador
         </button>
         <button
           @click="abaFilial = 'sfl'"
@@ -42,25 +42,40 @@
         >
           🏢 SFL
         </button>
+        <button
+          @click="abaFilial = 'transportadoras'"
+          :class="[
+            'px-6 py-3 font-semibold text-sm transition-all duration-200 border-b-2',
+            abaFilial === 'transportadoras'
+              ? 'border-primary-600 text-primary-600 bg-primary-50'
+              : 'border-transparent text-neutral-600 hover:text-primary-600 hover:bg-neutral-50',
+          ]"
+        >
+          🚚 Transportadoras
+        </button>
+        <button
+          @click="abaFilial = 'visitantes'"
+          :class="[
+            'px-6 py-3 font-semibold text-sm transition-all duration-200 border-b-2',
+            abaFilial === 'visitantes'
+              ? 'border-primary-600 text-primary-600 bg-primary-50'
+              : 'border-transparent text-neutral-600 hover:text-primary-600 hover:bg-neutral-50',
+          ]"
+        >
+          👥 Visitantes
+        </button>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
-      <!-- Loading State -->
-      <div
+      <!-- Loading State com Skeleton -->
+      <SkeletonLoader
         v-if="carregandoDados"
-        class="flex justify-center items-center py-12"
-      >
-        <div class="flex items-center space-x-3">
-          <div
-            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"
-          ></div>
-          <span class="text-secondary-600 font-medium"
-            >Carregando colaboradores...</span
-          >
-        </div>
-      </div>
+        :loading="true"
+        :colunas="14"
+        :linhas="10"
+      />
 
       <!-- Error State -->
       <div
@@ -286,25 +301,54 @@
             <table class="w-full divide-y divide-neutral-200">
               <thead class="bg-neutral-50">
                 <tr>
+                  <!-- Matrícula/RG -->
                   <th
+                    v-if="abaFilial !== 'transportadoras' && abaFilial !== 'visitantes'"
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
                     Matrícula
                   </th>
                   <th
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
+                  >
+                    RG
+                  </th>
+                  
+                  <!-- Nome -->
+                  <th
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
                     Nome
                   </th>
+                  
+                  <!-- Função (não aparece em visitantes) -->
                   <th
+                    v-if="abaFilial !== 'visitantes'"
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
                     Função
                   </th>
+                  
+                  <!-- Empresa -->
                   <th
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
-                    Filial
+                    {{ abaFilial === "transportadoras" || abaFilial === "visitantes" ? "Empresa" : "Filial" }}
+                  </th>
+                  
+                  <!-- Colunas específicas de visitantes -->
+                  <th
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
+                  >
+                    Autorização
+                  </th>
+                  <th
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider"
+                  >
+                    Informada Portaria?
                   </th>
                   <!-- Entradas e Saídas 1 -->
                   <th
@@ -415,7 +459,11 @@
                   :key="colaborador.id"
                   class="hover:bg-neutral-50 transition-colors duration-150"
                 >
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <!-- Matrícula (não aparece em transportadoras e visitantes) -->
+                  <td
+                    v-if="abaFilial !== 'transportadoras' && abaFilial !== 'visitantes'"
+                    class="px-6 py-4 whitespace-nowrap"
+                  >
                     <div class="flex items-center">
                       <div
                         class="flex-shrink-0 h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center"
@@ -426,22 +474,293 @@
                       </div>
                     </div>
                   </td>
+                  
+                  <!-- RG (só aparece em visitantes) -->
+                  <td
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-4 whitespace-nowrap"
+                  >
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-if="isCampoCadastralEditando(colaborador.id, 'rg')"
+                        v-model="valorCadastralTemporario"
+                        :data-campo-cadastral="`${colaborador.id}-rg`"
+                        type="text"
+                        placeholder="Digite o RG..."
+                        class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        @blur="salvarCampoCadastral(colaborador, 'rg')"
+                        @keydown.tab="salvarCampoCadastral(colaborador, 'rg')"
+                      />
+                      <span v-else class="flex-1 text-sm">
+                        {{ colaborador.rg || "Clique no ícone para editar" }}
+                      </span>
+                      <button
+                        @click="
+                          iniciarEdicaoCampoCadastral(
+                            colaborador.id,
+                            'rg',
+                            colaborador.rg
+                          )
+                        "
+                        class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
+                        title="Editar RG"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                  
+                  <!-- Nome -->
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-secondary-900">
+                    <!-- Transportadoras e Visitantes: modo edição com ícone -->
+                    <div
+                      v-if="abaFilial === 'transportadoras' || abaFilial === 'visitantes'"
+                      class="flex items-center gap-2"
+                    >
+                      <input
+                        v-if="isCampoCadastralEditando(colaborador.id, 'nome')"
+                        v-model="valorCadastralTemporario"
+                        :data-campo-cadastral="`${colaborador.id}-nome`"
+                        type="text"
+                        placeholder="Digite o nome..."
+                        class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        @blur="salvarCampoCadastral(colaborador, 'nome')"
+                        @keydown.tab="salvarCampoCadastral(colaborador, 'nome')"
+                      />
+                      <div
+                        v-else
+                        class="flex-1 text-sm font-medium text-secondary-900"
+                      >
+                        {{ colaborador.nome || "Clique no ícone para editar" }}
+                      </div>
+                      <button
+                        @click="
+                          iniciarEdicaoCampoCadastral(
+                            colaborador.id,
+                            'nome',
+                            colaborador.nome
+                          )
+                        "
+                        class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
+                        title="Editar nome"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <!-- Outras abas: visualização normal -->
+                    <div v-else class="text-sm font-medium text-secondary-900">
                       {{ colaborador.nome || "Não informado" }}
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  
+                  <!-- Função (não aparece em visitantes) -->
+                  <td v-if="abaFilial !== 'visitantes'" class="px-6 py-4 whitespace-nowrap">
+                    <!-- Transportadoras: modo edição com ícone -->
+                    <div
+                      v-if="abaFilial === 'transportadoras'"
+                      class="flex items-center gap-2"
+                    >
+                      <input
+                        v-if="
+                          isCampoCadastralEditando(colaborador.id, 'funcao')
+                        "
+                        v-model="valorCadastralTemporario"
+                        :data-campo-cadastral="`${colaborador.id}-funcao`"
+                        type="text"
+                        placeholder="Digite a função..."
+                        class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        @blur="salvarCampoCadastral(colaborador, 'funcao')"
+                        @keydown.tab="
+                          salvarCampoCadastral(colaborador, 'funcao')
+                        "
+                      />
+                      <span
+                        v-else
+                        class="flex-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800"
+                      >
+                        {{
+                          colaborador.funcao || "Clique no ícone para editar"
+                        }}
+                      </span>
+                      <button
+                        @click="
+                          iniciarEdicaoCampoCadastral(
+                            colaborador.id,
+                            'funcao',
+                            colaborador.funcao
+                          )
+                        "
+                        class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
+                        title="Editar função"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <!-- Outras abas: visualização normal -->
                     <span
+                      v-else
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800"
                     >
                       {{ colaborador.funcao || "Não informado" }}
                     </span>
                   </td>
+                  <!-- Empresa/Filial -->
                   <td
                     class="px-6 py-4 whitespace-nowrap text-sm text-secondary-500"
                   >
-                    {{ colaborador.filial || "Não informado" }}
+                    <!-- Transportadoras e Visitantes: modo edição com ícone -->
+                    <div
+                      v-if="abaFilial === 'transportadoras' || abaFilial === 'visitantes'"
+                      class="flex items-center gap-2"
+                    >
+                      <input
+                        v-if="
+                          isCampoCadastralEditando(colaborador.id, 'empresa')
+                        "
+                        v-model="valorCadastralTemporario"
+                        :data-campo-cadastral="`${colaborador.id}-empresa`"
+                        type="text"
+                        placeholder="Digite a empresa..."
+                        class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        @blur="salvarCampoCadastral(colaborador, 'empresa')"
+                        @keydown.tab="
+                          salvarCampoCadastral(colaborador, 'empresa')
+                        "
+                      />
+                      <span v-else class="flex-1">
+                        {{
+                          colaborador.empresa || "Clique no ícone para editar"
+                        }}
+                      </span>
+                      <button
+                        @click="
+                          iniciarEdicaoCampoCadastral(
+                            colaborador.id,
+                            'empresa',
+                            colaborador.empresa
+                          )
+                        "
+                        class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
+                        title="Editar empresa"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <!-- Outras abas: visualização normal -->
+                    <span v-else>
+                      {{ colaborador.filial || "Não informado" }}
+                    </span>
+                  </td>
+                  
+                  <!-- Autorização (só para visitantes) -->
+                  <td
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-4 whitespace-nowrap"
+                  >
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-if="isCampoCadastralEditando(colaborador.id, 'autorizacao')"
+                        v-model="valorCadastralTemporario"
+                        :data-campo-cadastral="`${colaborador.id}-autorizacao`"
+                        type="text"
+                        placeholder="Nome do autorizador..."
+                        class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        @blur="salvarCampoCadastral(colaborador, 'autorizacao')"
+                        @keydown.tab="salvarCampoCadastral(colaborador, 'autorizacao')"
+                      />
+                      <span v-else class="flex-1 text-sm">
+                        {{ colaborador.autorizacao || "Clique no ícone para editar" }}
+                      </span>
+                      <button
+                        @click="
+                          iniciarEdicaoCampoCadastral(
+                            colaborador.id,
+                            'autorizacao',
+                            colaborador.autorizacao
+                          )
+                        "
+                        class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
+                        title="Editar autorização"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                  
+                  <!-- Informada Portaria (só para visitantes) -->
+                  <td
+                    v-if="abaFilial === 'visitantes'"
+                    class="px-6 py-4 whitespace-nowrap text-center"
+                  >
+                    <select
+                      v-model="colaborador.informada_portaria"
+                      @change="salvarCampoCadastral(colaborador, 'informada_portaria')"
+                      class="px-3 py-1.5 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option :value="null">Selecionar...</option>
+                      <option :value="true">Sim</option>
+                      <option :value="false">Não</option>
+                    </select>
                   </td>
 
                   <!-- Entradas e Saídas individuais com edição inline -->
@@ -449,16 +768,32 @@
                   <td class="px-3 py-4 whitespace-nowrap text-center">
                     <!-- Edição inline individual -->
                     <div v-if="isCelulaEditando(colaborador.id, 'ent1')">
-                      <input
-                        v-model="valorTemporario"
-                        :data-celula="`${colaborador.id}-ent1`"
-                        type="time"
-                        class="text-xs border border-primary-300 rounded px-2 py-1 w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        @blur="salvarEdicaoCelula(colaborador.id, 'ent1')"
-                        @keydown="
-                          handleKeyPress($event, colaborador.id, 'ent1')
-                        "
-                      />
+                      <div class="relative">
+                        <input
+                          v-model="valorTemporario"
+                          :data-celula="`${colaborador.id}-ent1`"
+                          type="time"
+                          :disabled="salvandoCelula"
+                          :class="[
+                            'text-xs border rounded px-2 py-1 w-20 focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+                            salvandoCelula
+                              ? 'border-gray-300 bg-gray-50'
+                              : 'border-primary-300',
+                          ]"
+                          @blur="salvarEdicaoCelula(colaborador.id, 'ent1')"
+                          @keydown="
+                            handleKeyPress($event, colaborador.id, 'ent1')
+                          "
+                        />
+                        <div
+                          v-if="salvandoCelula"
+                          class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
+                        >
+                          <div
+                            class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"
+                          ></div>
+                        </div>
+                      </div>
                     </div>
                     <!-- Modo de visualização -->
                     <div
@@ -470,8 +805,19 @@
                           colaborador.ent1
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.ent1"
@@ -514,8 +860,19 @@
                           colaborador.sai1
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.sai1"
@@ -557,8 +914,19 @@
                           colaborador.ent2
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.ent2"
@@ -600,8 +968,19 @@
                           colaborador.sai2
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.sai2"
@@ -643,8 +1022,19 @@
                           colaborador.ent3
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.ent3"
@@ -686,8 +1076,19 @@
                           colaborador.sai3
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.sai3"
@@ -729,8 +1130,19 @@
                           colaborador.ent4
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.ent4"
@@ -772,8 +1184,19 @@
                           colaborador.sai4
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.sai4"
@@ -815,8 +1238,19 @@
                           colaborador.ent5
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.ent5"
@@ -858,8 +1292,19 @@
                           colaborador.sai5
                         )
                       "
-                      class="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors"
-                      title="Duplo clique para editar"
+                      :class="[
+                        'rounded px-2 py-1 transition-colors',
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'cursor-pointer hover:bg-gray-50',
+                      ]"
+                      :title="
+                        abaFilial === 'transportadoras' &&
+                        !podeEditarEntradaSaida(colaborador)
+                          ? 'Preencha Nome e Empresa primeiro'
+                          : 'Duplo clique para editar'
+                      "
                     >
                       <span
                         v-if="colaborador.sai5"
@@ -1047,6 +1492,16 @@ const {
   atualizarColaborador: atualizarColaboradorSFL,
 } = useColaboradoresSFL();
 
+// Composable para gerenciar transportadoras
+const {
+  transportadoras: transportadorasStore,
+  loading: loadingTransportadoras,
+  error: errorTransportadoras,
+  buscarTransportadoras,
+  atualizarTransportadora,
+  criarTransportadora,
+} = useTransportadoras();
+
 // Estado para controlar qual aba está ativa
 const abaFilial = ref("principal");
 
@@ -1058,22 +1513,96 @@ const {
   mesclarColaboradoresComHistorico,
 } = useHistorico();
 
+// Composable para visitantes
+const {
+  buscarVisitantes,
+  criarVisitante,
+  atualizarVisitante,
+} = useVisitantes();
+
 // Estado local para colaboradores (writable)
 const colaboradores = ref([]);
 
+// Estado para linhas vazias de transportadoras (para entrada manual)
+const linhasTransportadoras = ref([]);
+const numLinhasTransportadoras = 10; // Número de linhas vazias para transportadoras
+
+// Inicializar linhas vazias para transportadoras
+const inicializarLinhasTransportadoras = () => {
+  linhasTransportadoras.value = Array.from(
+    { length: numLinhasTransportadoras },
+    (_, index) => ({
+      id: `temp-${index}`,
+      nome: "",
+      funcao: "",
+      empresa: "",
+      ent1: "",
+      sai1: "",
+      ent2: "",
+      sai2: "",
+      ent3: "",
+      sai3: "",
+      ent4: "",
+      sai4: "",
+      ent5: "",
+      sai5: "",
+      isTemp: true,
+    })
+  );
+};
+
+// Estado para linhas vazias de visitantes (para entrada manual)
+const linhasVisitantes = ref([]);
+const numLinhasVisitantes = 10; // Número de linhas vazias para visitantes
+
+// Inicializar linhas vazias para visitantes
+const inicializarLinhasVisitantes = () => {
+  linhasVisitantes.value = Array.from(
+    { length: numLinhasVisitantes },
+    (_, index) => ({
+      id: `temp-visitante-${index}`,
+      rg: "",
+      nome: "",
+      empresa: "",
+      autorizacao: "",
+      informada_portaria: null,
+      ent1: "",
+      sai1: "",
+      ent2: "",
+      sai2: "",
+      ent3: "",
+      sai3: "",
+      ent4: "",
+      sai4: "",
+      ent5: "",
+      sai5: "",
+      isTemp: true,
+    })
+  );
+};
+
 // Computed para retornar os colaboradores do store ativo
 const colaboradoresStoreAtivo = computed(() => {
-  return abaFilial.value === "principal"
-    ? colaboradoresStore.value
-    : colaboradoresSFLStore.value;
+  if (abaFilial.value === "principal") {
+    return colaboradoresStore.value;
+  } else if (abaFilial.value === "sfl") {
+    return colaboradoresSFLStore.value;
+  } else if (abaFilial.value === "transportadoras") {
+    return transportadorasStore.value;
+  } else if (abaFilial.value === "visitantes") {
+    return linhasVisitantes.value;
+  }
+  return [];
 });
 
 // Função para buscar colaboradores da aba ativa
 const buscarColaboradoresAtivos = async () => {
   if (abaFilial.value === "principal") {
     await buscarColaboradores();
-  } else {
+  } else if (abaFilial.value === "sfl") {
     await buscarColaboradoresSFL();
+  } else {
+    await buscarTransportadoras();
   }
 };
 
@@ -1081,8 +1610,10 @@ const buscarColaboradoresAtivos = async () => {
 const atualizarColaboradorAtivo = async (id, dados) => {
   if (abaFilial.value === "principal") {
     return await atualizarColaborador(id, dados);
-  } else {
+  } else if (abaFilial.value === "sfl") {
     return await atualizarColaboradorSFL(id, dados);
+  } else {
+    return await atualizarTransportadora(id, dados);
   }
 };
 
@@ -1095,6 +1626,10 @@ const salvandoColaborador = ref(false);
 const editandoCelula = ref(null); // Formato: "colaboradorId-campo" ex: "123-ent1"
 const valorTemporario = ref("");
 const salvandoCelula = ref(false);
+
+// Estado para edição de campos cadastrais (nome, função, empresa)
+const campoCadastralEditando = ref(null); // Formato: "colaboradorId-campo" ex: "123-nome"
+const valorCadastralTemporario = ref("");
 
 // Estado para pesquisa
 const termoPesquisa = ref("");
@@ -1135,6 +1670,16 @@ const diaSemanAtual = computed(() => {
 
 // Computed para filtrar colaboradores
 const colaboradoresFiltrados = computed(() => {
+  // Se for aba de transportadoras, retornar linhas vazias editáveis
+  if (abaFilial.value === "transportadoras") {
+    return linhasTransportadoras.value;
+  }
+  
+  // Se for aba de visitantes, retornar linhas vazias editáveis
+  if (abaFilial.value === "visitantes") {
+    return linhasVisitantes.value;
+  }
+
   if (!colaboradores.value) return [];
 
   let resultados = colaboradores.value;
@@ -1189,7 +1734,36 @@ const cancelarEdicao = () => {
 };
 
 // Funções para edição inline de células individuais
+const podeEditarEntradaSaida = (colaborador) => {
+  // Para transportadoras e visitantes, verificar se nome e empresa estão preenchidos
+  if (abaFilial.value === "transportadoras" || abaFilial.value === "visitantes") {
+    return (
+      colaborador.nome &&
+      colaborador.nome.trim() !== "" &&
+      colaborador.empresa &&
+      colaborador.empresa.trim() !== ""
+    );
+  }
+  // Para outras abas, sempre permitir
+  return true;
+};
+
 const iniciarEdicaoCelula = (colaboradorId, campo, valorAtual) => {
+  // Se for transportadoras ou visitantes, verificar se pode editar
+  if (abaFilial.value === "transportadoras" || abaFilial.value === "visitantes") {
+    const lista = abaFilial.value === "transportadoras" 
+      ? linhasTransportadoras.value 
+      : linhasVisitantes.value;
+    const colaborador = lista.find((c) => c.id === colaboradorId);
+    if (colaborador && !podeEditarEntradaSaida(colaborador)) {
+      notify.warning(
+        "Preencha o Nome e a Empresa antes de registrar entradas/saídas",
+        "Campos obrigatórios"
+      );
+      return;
+    }
+  }
+
   const chave = `${colaboradorId}-${campo}`;
   editandoCelula.value = chave;
 
@@ -1208,6 +1782,256 @@ const iniciarEdicaoCelula = (colaboradorId, campo, valorAtual) => {
       input.select();
     }
   });
+};
+
+// Funções para edição de campos cadastrais (nome, função, empresa)
+const isCampoCadastralEditando = (colaboradorId, campo) => {
+  return campoCadastralEditando.value === `${colaboradorId}-${campo}`;
+};
+
+const iniciarEdicaoCampoCadastral = (colaboradorId, campo, valorAtual) => {
+  const chave = `${colaboradorId}-${campo}`;
+  campoCadastralEditando.value = chave;
+  valorCadastralTemporario.value = valorAtual || "";
+
+  // Focar no input após a próxima atualização do DOM
+  nextTick(() => {
+    const input = document.querySelector(
+      `input[data-campo-cadastral="${chave}"]`
+    );
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+};
+
+const salvarCampoCadastral = async (colaborador, campo) => {
+  if (salvandoCelula.value) return;
+
+  try {
+    salvandoCelula.value = true;
+
+    // Atualizar o valor no colaborador
+    if (campo === 'informada_portaria') {
+      // Para select de Sim/Não, já está no colaborador.informada_portaria
+      // Não precisa de valorCadastralTemporario
+    } else {
+      colaborador[campo] = valorCadastralTemporario.value;
+    }
+
+    // Salvar os dados cadastrais dependendo da aba
+    if (abaFilial.value === "transportadoras") {
+      await salvarDadosCadastraisTransportadora(colaborador);
+    } else if (abaFilial.value === "visitantes") {
+      await salvarDadosCadastraisVisitante(colaborador);
+    }
+
+    // Desabilitar edição (bloquear o campo)
+    campoCadastralEditando.value = null;
+    valorCadastralTemporario.value = "";
+  } catch (err) {
+    console.error("❌ Erro ao salvar campo cadastral:", err);
+  } finally {
+    salvandoCelula.value = false;
+  }
+};
+
+/**
+ * Salvar dados cadastrais de transportadora (nome, função, empresa)
+ * Salva tanto no cadastro quanto no histórico da data atual
+ */
+const salvarDadosCadastraisTransportadora = async (colaborador) => {
+  // Ignorar se for linha temporária vazia
+  if (
+    String(colaborador.id).startsWith("temp-") &&
+    !colaborador.nome &&
+    !colaborador.funcao &&
+    !colaborador.empresa
+  ) {
+    return;
+  }
+
+  try {
+    let colaboradorId = colaborador.id;
+
+    // Se for linha temporária, criar novo registro
+    if (String(colaborador.id).startsWith("temp-")) {
+      console.log("➕ Criando nova transportadora (dados cadastrais)");
+      const dadosCadastrais = {
+        nome: colaborador.nome || null,
+        funcao: colaborador.funcao || null,
+        empresa: colaborador.empresa || null,
+      };
+
+      const novaTransportadora = await criarTransportadora(dadosCadastrais);
+      console.log("✅ Transportadora criada:", novaTransportadora);
+
+      colaboradorId = novaTransportadora.id;
+
+      // Substituir linha temporária pela real
+      const index = linhasTransportadoras.value.findIndex((t) =>
+        String(t.id).startsWith("temp-")
+      );
+      if (index !== -1) {
+        linhasTransportadoras.value[index] = {
+          ...novaTransportadora,
+          ...colaborador,
+          id: novaTransportadora.id,
+          isTemp: false,
+        };
+      }
+    } else {
+      // Atualizar registro existente no cadastro
+      console.log("📝 Atualizando dados cadastrais da transportadora");
+      await atualizarTransportadora(colaborador.id, {
+        nome: colaborador.nome || null,
+        funcao: colaborador.funcao || null,
+        empresa: colaborador.empresa || null,
+      });
+      console.log("✅ Dados cadastrais atualizados no cadastro");
+    }
+
+    // IMPORTANTE: Também salvar no histórico da data atual
+    console.log("💾 Salvando também no histórico da data atual");
+
+    // Buscar histórico existente
+    const { historico: historicoColaborador } = await buscarHistoricoPorData(
+      colaboradorId,
+      dataFiltro.value,
+      "transportadoras"
+    );
+
+    // Preparar dados do histórico mantendo entradas/saídas existentes
+    // Para transportadoras: o campo 'empresa' é salvo no campo 'filial' da tabela histórico
+    const dadosHistorico = {
+      nome: colaborador.nome || null,
+      funcao: colaborador.funcao || null,
+      filial: colaborador.empresa || null, // Salva empresa no campo filial
+      ent1: historicoColaborador?.ent1 || colaborador.ent1 || null,
+      sai1: historicoColaborador?.sai1 || colaborador.sai1 || null,
+      ent2: historicoColaborador?.ent2 || colaborador.ent2 || null,
+      sai2: historicoColaborador?.sai2 || colaborador.sai2 || null,
+      ent3: historicoColaborador?.ent3 || colaborador.ent3 || null,
+      sai3: historicoColaborador?.sai3 || colaborador.sai3 || null,
+      ent4: historicoColaborador?.ent4 || colaborador.ent4 || null,
+      sai4: historicoColaborador?.sai4 || colaborador.sai4 || null,
+      ent5: historicoColaborador?.ent5 || colaborador.ent5 || null,
+      sai5: historicoColaborador?.sai5 || colaborador.sai5 || null,
+    };
+
+    await salvarHistorico(
+      colaboradorId,
+      dataFiltro.value,
+      dadosHistorico,
+      "transportadoras"
+    );
+
+    console.log("✅ Histórico atualizado");
+  } catch (err) {
+    console.error("❌ Erro ao salvar dados cadastrais:", err);
+  }
+};
+
+/**
+ * Salvar dados cadastrais de visitante (rg, nome, empresa, autorizacao, informada_portaria)
+ * Salva tanto no cadastro quanto no histórico da data atual
+ */
+const salvarDadosCadastraisVisitante = async (colaborador) => {
+  // Ignorar se for linha temporária vazia
+  if (
+    String(colaborador.id).startsWith("temp-visitante-") &&
+    !colaborador.nome &&
+    !colaborador.empresa &&
+    !colaborador.rg
+  ) {
+    return;
+  }
+
+  try {
+    let colaboradorId = colaborador.id;
+
+    // Se for linha temporária, criar novo registro
+    if (String(colaborador.id).startsWith("temp-visitante-")) {
+      console.log("➕ Criando novo visitante (dados cadastrais)");
+      const dadosCadastrais = {
+        rg: colaborador.rg || null,
+        nome: colaborador.nome || null,
+        empresa: colaborador.empresa || null,
+        autorizacao: colaborador.autorizacao || null,
+        informada_portaria: colaborador.informada_portaria,
+      };
+
+      const novoVisitante = await criarVisitante(dadosCadastrais);
+      console.log("✅ Visitante criado:", novoVisitante);
+
+      colaboradorId = novoVisitante.id;
+
+      // Substituir linha temporária pela real
+      const index = linhasVisitantes.value.findIndex((v) =>
+        String(v.id).startsWith("temp-visitante-")
+      );
+      if (index !== -1) {
+        linhasVisitantes.value[index] = {
+          ...novoVisitante,
+          ...colaborador,
+          id: novoVisitante.id,
+          isTemp: false,
+        };
+      }
+    } else {
+      // Atualizar registro existente no cadastro
+      console.log("📝 Atualizando dados cadastrais do visitante");
+      await atualizarVisitante(colaborador.id, {
+        rg: colaborador.rg || null,
+        nome: colaborador.nome || null,
+        empresa: colaborador.empresa || null,
+        autorizacao: colaborador.autorizacao || null,
+        informada_portaria: colaborador.informada_portaria,
+      });
+      console.log("✅ Dados cadastrais atualizados no cadastro");
+    }
+
+    // IMPORTANTE: Também salvar no histórico da data atual
+    console.log("💾 Salvando também no histórico da data atual");
+
+    // Buscar histórico existente
+    const { historico: historicoColaborador } = await buscarHistoricoPorData(
+      colaboradorId,
+      dataFiltro.value,
+      "visitantes"
+    );
+
+    // Preparar dados do histórico mantendo entradas/saídas existentes
+    const dadosHistorico = {
+      rg: colaborador.rg || null,
+      nome: colaborador.nome || null,
+      filial: colaborador.empresa || null, // Empresa vai para campo filial
+      autorizacao: colaborador.autorizacao || null,
+      informada_portaria: colaborador.informada_portaria,
+      ent1: historicoColaborador?.ent1 || colaborador.ent1 || null,
+      sai1: historicoColaborador?.sai1 || colaborador.sai1 || null,
+      ent2: historicoColaborador?.ent2 || colaborador.ent2 || null,
+      sai2: historicoColaborador?.sai2 || colaborador.sai2 || null,
+      ent3: historicoColaborador?.ent3 || colaborador.ent3 || null,
+      sai3: historicoColaborador?.sai3 || colaborador.sai3 || null,
+      ent4: historicoColaborador?.ent4 || colaborador.ent4 || null,
+      sai4: historicoColaborador?.sai4 || colaborador.sai4 || null,
+      ent5: historicoColaborador?.ent5 || colaborador.ent5 || null,
+      sai5: historicoColaborador?.sai5 || colaborador.sai5 || null,
+    };
+
+    await salvarHistorico(
+      colaboradorId,
+      dataFiltro.value,
+      dadosHistorico,
+      "visitantes"
+    );
+
+    console.log("✅ Histórico atualizado");
+  } catch (err) {
+    console.error("❌ Erro ao salvar dados cadastrais do visitante:", err);
+  }
 };
 
 const salvarEdicaoCelula = async (colaboradorId, campo) => {
@@ -1230,11 +2054,62 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       `💾 Salvando ${campo} para colaborador ${colaboradorId}: ${valorAtual}`
     );
 
-    // Buscar colaborador para pegar dados cadastrais
-    const colaborador = colaboradores.value.find((c) => c.id === colaboradorId);
+    // Buscar colaborador/transportadora/visitante para pegar dados
+    const colaborador =
+      abaFilial.value === "transportadoras"
+        ? linhasTransportadoras.value.find((c) => c.id === colaboradorId)
+        : abaFilial.value === "visitantes"
+        ? linhasVisitantes.value.find((c) => c.id === colaboradorId)
+        : colaboradores.value.find((c) => c.id === colaboradorId);
+
     console.log("👤 Colaborador encontrado:", colaborador ? "SIM" : "NÃO");
     if (!colaborador) {
       throw new Error("Colaborador não encontrado");
+    }
+
+    // Validar horário se fornecido
+    if (valorAtual && valorAtual.trim()) {
+      const [horas, minutos] = valorAtual.split(":").map(Number);
+
+      // Validar formato
+      if (
+        isNaN(horas) ||
+        isNaN(minutos) ||
+        horas < 0 ||
+        horas > 23 ||
+        minutos < 0 ||
+        minutos > 59
+      ) {
+        notify.error(
+          "Horário inválido. Use o formato HH:MM (00:00 - 23:59)",
+          "Erro de validação"
+        );
+        editandoCelula.value = null;
+        valorTemporario.value = "";
+        salvandoCelula.value = false;
+        return;
+      }
+
+      // Validar se saída é depois da entrada correspondente
+      if (campo.startsWith("sai")) {
+        const numeroEntrada = campo.replace("sai", "");
+        const campoEntrada = `ent${numeroEntrada}`;
+        const valorEntrada = colaborador[campoEntrada];
+
+        if (valorEntrada) {
+          const entradaHora = timestampParaHora(valorEntrada);
+          if (entradaHora && valorAtual < entradaHora) {
+            notify.error(
+              `A saída não pode ser antes da entrada (${entradaHora})`,
+              "Horário inválido"
+            );
+            editandoCelula.value = null;
+            valorTemporario.value = "";
+            salvandoCelula.value = false;
+            return;
+          }
+        }
+      }
     }
 
     // Preparar dados para atualização
@@ -1263,6 +2138,85 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       dadosAtualizados[campo] = null;
     }
 
+    // Se for transportadora ou visitante, salvar diretamente na tabela respectiva
+    if (abaFilial.value === "transportadoras") {
+      console.log("🚚 Salvando transportadora...");
+
+      // Verificar se é linha temporária (precisa criar) ou já existe (atualizar)
+      if (String(colaboradorId).startsWith("temp-")) {
+        // Criar nova transportadora no cadastro
+        console.log("➕ Criando nova transportadora no cadastro");
+
+        const dadosCadastrais = {
+          nome: colaborador.nome || null,
+          funcao: colaborador.funcao || null,
+          empresa: colaborador.empresa || null,
+        };
+
+        const novaTransportadora = await criarTransportadora(dadosCadastrais);
+        console.log("✅ Transportadora criada:", novaTransportadora);
+
+        // Atualizar o ID para o ID real
+        colaboradorId = novaTransportadora.id;
+        colaborador.id = novaTransportadora.id;
+
+        // Substituir linha temporária pela real
+        const index = linhasTransportadoras.value.findIndex((t) =>
+          String(t.id).startsWith("temp-")
+        );
+        if (index !== -1) {
+          linhasTransportadoras.value[index] = {
+            ...novaTransportadora,
+            ...colaborador,
+            id: novaTransportadora.id,
+            isTemp: false,
+          };
+        }
+      }
+
+      // Agora salvar no histórico (igual outras abas)
+      console.log("💾 Salvando no histórico da transportadora");
+    } else if (abaFilial.value === "visitantes") {
+      console.log("👥 Salvando visitante...");
+
+      // Verificar se é linha temporária (precisa criar) ou já existe (atualizar)
+      if (String(colaboradorId).startsWith("temp-visitante-")) {
+        // Criar novo visitante no cadastro
+        console.log("➕ Criando novo visitante no cadastro");
+
+        const dadosCadastrais = {
+          rg: colaborador.rg || null,
+          nome: colaborador.nome || null,
+          empresa: colaborador.empresa || null,
+          autorizacao: colaborador.autorizacao || null,
+          informada_portaria: colaborador.informada_portaria,
+        };
+
+        const novoVisitante = await criarVisitante(dadosCadastrais);
+        console.log("✅ Visitante criado:", novoVisitante);
+
+        // Atualizar o ID para o ID real
+        colaboradorId = novoVisitante.id;
+        colaborador.id = novoVisitante.id;
+
+        // Substituir linha temporária pela real
+        const index = linhasVisitantes.value.findIndex((v) =>
+          String(v.id).startsWith("temp-visitante-")
+        );
+        if (index !== -1) {
+          linhasVisitantes.value[index] = {
+            ...novoVisitante,
+            ...colaborador,
+            id: novoVisitante.id,
+            isTemp: false,
+          };
+        }
+      }
+
+      // Agora salvar no histórico (igual outras abas)
+      console.log("💾 Salvando no histórico do visitante");
+    }
+
     // Buscar histórico existente da data atual para este colaborador
     console.log("🔍 Buscando histórico para:", {
       colaboradorId,
@@ -1277,27 +2231,64 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     console.log("📋 Histórico encontrado:", historicoColaborador);
 
     // Preparar dados completos do histórico
-    // ⚠️ IMPORTANTE: Usar APENAS dados do histórico da data selecionada
-    // NÃO usar dados da tabela colaboradores (que não tem relação com data)
-    const dadosHistorico = {
-      nome: colaborador.nome,
-      funcao: colaborador.funcao,
-      filial: colaborador.filial,
-      matricula: colaborador.matricula,
-      // Campos de entrada/saída APENAS do histórico existente para esta data
-      ent1: historicoColaborador?.ent1 || null,
-      sai1: historicoColaborador?.sai1 || null,
-      ent2: historicoColaborador?.ent2 || null,
-      sai2: historicoColaborador?.sai2 || null,
-      ent3: historicoColaborador?.ent3 || null,
-      sai3: historicoColaborador?.sai3 || null,
-      ent4: historicoColaborador?.ent4 || null,
-      sai4: historicoColaborador?.sai4 || null,
-      ent5: historicoColaborador?.ent5 || null,
-      sai5: historicoColaborador?.sai5 || null,
-      // Atualizar campo específico
-      [campo]: dadosAtualizados[campo],
-    };
+    // Para transportadoras e visitantes: o campo 'empresa' é salvo no campo 'filial' da tabela histórico
+    const dadosHistorico =
+      abaFilial.value === "transportadoras"
+        ? {
+            // Para transportadoras: salvar no histórico (empresa vai para campo filial)
+            nome: colaborador.nome || historicoColaborador?.nome || null,
+            funcao: colaborador.funcao || historicoColaborador?.funcao || null,
+            filial: colaborador.empresa || historicoColaborador?.filial || null, // Salva empresa no campo filial
+            ent1: historicoColaborador?.ent1 || null,
+            sai1: historicoColaborador?.sai1 || null,
+            ent2: historicoColaborador?.ent2 || null,
+            sai2: historicoColaborador?.sai2 || null,
+            ent3: historicoColaborador?.ent3 || null,
+            sai3: historicoColaborador?.sai3 || null,
+            ent4: historicoColaborador?.ent4 || null,
+            sai4: historicoColaborador?.sai4 || null,
+            ent5: historicoColaborador?.ent5 || null,
+            sai5: historicoColaborador?.sai5 || null,
+            [campo]: dadosAtualizados[campo],
+          }
+        : abaFilial.value === "visitantes"
+        ? {
+            // Para visitantes: salvar no histórico (empresa vai para campo filial)
+            rg: colaborador.rg || historicoColaborador?.rg || null,
+            nome: colaborador.nome || historicoColaborador?.nome || null,
+            filial: colaborador.empresa || historicoColaborador?.filial || null, // Salva empresa no campo filial
+            autorizacao: colaborador.autorizacao || historicoColaborador?.autorizacao || null,
+            informada_portaria: colaborador.informada_portaria !== null ? colaborador.informada_portaria : historicoColaborador?.informada_portaria,
+            ent1: historicoColaborador?.ent1 || null,
+            sai1: historicoColaborador?.sai1 || null,
+            ent2: historicoColaborador?.ent2 || null,
+            sai2: historicoColaborador?.sai2 || null,
+            ent3: historicoColaborador?.ent3 || null,
+            sai3: historicoColaborador?.sai3 || null,
+            ent4: historicoColaborador?.ent4 || null,
+            sai4: historicoColaborador?.sai4 || null,
+            ent5: historicoColaborador?.ent5 || null,
+            sai5: historicoColaborador?.sai5 || null,
+            [campo]: dadosAtualizados[campo],
+          }
+        : {
+            // Para outras abas: incluir dados cadastrais
+            nome: colaborador.nome,
+            funcao: colaborador.funcao,
+            filial: colaborador.filial,
+            matricula: colaborador.matricula,
+            ent1: historicoColaborador?.ent1 || null,
+            sai1: historicoColaborador?.sai1 || null,
+            ent2: historicoColaborador?.ent2 || null,
+            sai2: historicoColaborador?.sai2 || null,
+            ent3: historicoColaborador?.ent3 || null,
+            sai3: historicoColaborador?.sai3 || null,
+            ent4: historicoColaborador?.ent4 || null,
+            sai4: historicoColaborador?.sai4 || null,
+            ent5: historicoColaborador?.ent5 || null,
+            sai5: historicoColaborador?.sai5 || null,
+            [campo]: dadosAtualizados[campo],
+          };
 
     // Salvar no histórico APENAS (não salvar na tabela principal)
     // A tabela colaboradores é apenas cadastral, não tem relação com datas
@@ -1327,38 +2318,35 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     console.log("✅ Histórico salvo com sucesso!");
 
+    // Atualizar valor local imediatamente
+    colaborador[campo] = dadosAtualizados[campo];
+
     // Cancelar edição primeiro
     cancelarEdicaoCelula();
 
-    // Recarregar dados para garantir sincronização
-    await carregarDadosPorData(dataFiltro.value);
-
-    // Salvo sem notificação para não poluir a interface
+    // Mostrar feedback de sucesso (silencioso se apagar)
+    if (dadosAtualizados[campo]) {
+      notify.success("Horário salvo com sucesso", "");
+    }
   } catch (err) {
     console.error("❌ Erro ao salvar célula:", err);
 
     // Verificar se é erro de tabela não existente
     if (err.message?.includes("colaboradores_historico")) {
-      alert(
-        "⚠️ ERRO: Tabela de histórico não encontrada!\n\n" +
-          "Para que as edições de horário funcionem, você precisa:\n\n" +
-          "1. Acessar o Supabase Dashboard\n" +
-          "2. Ir em SQL Editor\n" +
-          "3. Executar o script: database/create_historico_table.sql\n\n" +
-          "Consulte o arquivo SETUP_TABELA_HISTORICO.md para instruções detalhadas."
+      notify.error(
+        "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase.",
+        "Erro de banco de dados"
       );
     } else if (err.message?.includes("origem")) {
-      alert(
-        "⚠️ ERRO: Coluna 'origem' não encontrada!\n\n" +
-          "Execute o script SQL para adicionar a coluna:\n\n" +
-          "1. Acessar o Supabase Dashboard\n" +
-          "2. Ir em SQL Editor\n" +
-          "3. Executar: database/adicionar_coluna_origem.sql\n\n" +
-          "Consulte ATUALIZACAO_ORIGEM_HISTORICO.md para mais detalhes."
+      notify.error(
+        "Coluna 'origem' não encontrada. Execute o script SQL para adicionar a coluna.",
+        "Erro de banco de dados"
       );
     } else {
-      const errorMsg = err.message || String(err);
-      alert(`Erro ao salvar: ${errorMsg}. Tente novamente.`);
+      notify.error(
+        err.message || "Erro desconhecido ao salvar horário",
+        "Erro ao salvar"
+      );
     }
   } finally {
     salvandoCelula.value = false;
@@ -1707,8 +2695,103 @@ const carregarDadosPorData = async (data) => {
     console.log(`📅 Carregando dados para data: ${data}`);
     console.log(`📋 Aba ativa: ${abaFilial.value}`);
 
+    // Se for transportadoras, carregar da tabela colaboradorestransp e mesclar com histórico
+    if (abaFilial.value === "transportadoras") {
+      // 1. Buscar dados cadastrais das transportadoras
+      await buscarTransportadoras();
+
+      // 2. Buscar histórico da data para transportadoras
+      const { historicos, error: errorHistorico } =
+        await buscarHistoricosPorData(data, "transportadoras");
+
+      if (errorHistorico) {
+        console.error(
+          "Erro ao buscar históricos transportadoras:",
+          errorHistorico
+        );
+      }
+
+      console.log(
+        `✅ ${
+          historicos?.length || 0
+        } históricos de transportadoras encontrados`
+      );
+
+      // 3. Para transportadoras: mostrar SOMENTE o histórico da data
+      // Se não existe histórico para essa data, mostrar tabela vazia
+      let transportadorasMescladas = [];
+
+      if (historicos && historicos.length > 0) {
+        // Somente se houver histórico para esta data, mostrar os dados
+        transportadorasMescladas = historicos.map((hist) => {
+          return {
+            id: hist.colaborador_id, // ID do cadastro
+            nome: hist.nome || "",
+            funcao: hist.funcao || "",
+            empresa: hist.filial || "", // Lê empresa do campo filial
+            ent1: hist.ent1 || null,
+            sai1: hist.sai1 || null,
+            ent2: hist.ent2 || null,
+            sai2: hist.sai2 || null,
+            ent3: hist.ent3 || null,
+            sai3: hist.sai3 || null,
+            ent4: hist.ent4 || null,
+            sai4: hist.sai4 || null,
+            ent5: hist.ent5 || null,
+            sai5: hist.sai5 || null,
+            isTemp: false,
+          };
+        });
+      }
+
+      // 4. Adicionar linhas vazias
+      const linhasVazias = Math.max(
+        0,
+        numLinhasTransportadoras - transportadorasMescladas.length
+      );
+
+      linhasTransportadoras.value = [
+        ...transportadorasMescladas.map((t) => ({ ...t, isTemp: false })),
+        ...Array.from({ length: linhasVazias }, (_, index) => ({
+          id: `temp-${index}`,
+          nome: "",
+          funcao: "",
+          empresa: "",
+          ent1: "",
+          sai1: "",
+          ent2: "",
+          sai2: "",
+          ent3: "",
+          sai3: "",
+          ent4: "",
+          sai4: "",
+          ent5: "",
+          sai5: "",
+          isTemp: true,
+        })),
+      ];
+
+      errorMensagem.value = null;
+      carregandoDados.value = false;
+      return;
+    }
+
     // 1. Buscar colaboradores da aba ativa (dados cadastrais)
     await buscarColaboradoresAtivos();
+
+    // Verificar se há colaboradores cadastrados
+    if (
+      !colaboradoresStoreAtivo.value ||
+      colaboradoresStoreAtivo.value.length === 0
+    ) {
+      console.warn(
+        `⚠️ Nenhum colaborador encontrado para a aba: ${abaFilial.value}`
+      );
+      colaboradores.value = [];
+      errorMensagem.value = null;
+      carregandoDados.value = false;
+      return;
+    }
 
     // 2. Buscar históricos da data selecionada para a aba ativa
     const { historicos, error: errorHistorico } = await buscarHistoricosPorData(
@@ -1760,9 +2843,16 @@ const carregarDadosPorData = async (data) => {
 // Carregar dados na inicialização
 onMounted(async () => {
   try {
-    // Carregar ambos os stores na inicialização
+    // Inicializar linhas vazias para transportadoras e visitantes
+    inicializarLinhasTransportadoras();
+    inicializarLinhasVisitantes();
+
+    // Carregar todos os stores na inicialização
     await buscarColaboradores();
     await buscarColaboradoresSFL();
+    // Não precisa carregar transportadoras e visitantes pois usamos linhas vazias
+    // await buscarTransportadoras();
+    // await buscarVisitantes();
     // Depois carregar os dados da data selecionada
     await carregarDadosPorData(dataFiltro.value);
   } catch (err) {
