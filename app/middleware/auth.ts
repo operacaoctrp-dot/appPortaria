@@ -1,41 +1,58 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   console.log("🛡️ Middleware auth executado para:", to.path);
 
-  if (typeof window !== "undefined") {
-    // Verificar se há tokens do Supabase no localStorage
-    // Esta é a forma mais confiável de detectar se usuário estava logado
-    const hasStoredSession = Object.keys(localStorage).some(
-      (key) => key.startsWith("sb-") && key.endsWith("-auth-token")
-    );
+  if (typeof window === "undefined") {
+    // SSR - não verificar aqui
+    return;
+  }
 
-    console.log("🔑 Sessão armazenada encontrada:", hasStoredSession);
+  // Aguardar que o Supabase restaure a sessão (max 2 segundos)
+  let session = null;
+  let attempts = 0;
+  
+  try {
+    const supabase = useSupabaseClient();
 
-    // Se há tokens armazenados, permitir acesso
-    // O Supabase restaurará a sessão em segundo plano
-    if (hasStoredSession) {
-      console.log("✅ Tokens encontrados - permitindo acesso (restaurando sessão...)");
+    if (!supabase || !supabase.auth) {
+      console.warn("⚠️ Cliente Supabase não disponível");
       return;
     }
 
-    // Se não há tokens, tentar uma última verificação rápida
-    let supabase;
-    try {
-      supabase = useSupabaseClient();
-
-      if (supabase && supabase.auth) {
-        const { data } = await supabase.auth.getSession();
-
-        if (data.session?.user) {
-          console.log("✅ Sessão ativa encontrada");
-          return;
-        }
+    // Tentar obter sessão com múltiplas tentativas
+    // Importante: dar tempo para o Supabase restaurar do storage
+    while (attempts < 20) {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.warn("⚠️ Erro ao obter sessão:", error.message);
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 100));
+        continue;
       }
-    } catch (error) {
-      console.warn("⚠️ Erro ao verificar sessão:", error);
+
+      session = data.session;
+      
+      if (session?.user) {
+        console.log("✅ Sessão encontrada na tentativa", attempts + 1);
+        break;
+      }
+
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Sem tokens e sem sessão ativa = redirecionar para login
-    console.log("❌ Sem autenticação - redirecionando para login");
+    if (session?.user) {
+      console.log("✅ Usuário autenticado:", session.user.email);
+      return;
+    }
+
+    // Sem sessão - redirecionar para login
+    console.log("❌ Sem autenticação após", attempts, "tentativas - redirecionando para login");
+    return navigateTo("/login");
+
+  } catch (error) {
+    console.error("❌ Erro no middleware auth:", error);
+    // Em caso de erro, redirecionar para login para segurança
     return navigateTo("/login");
   }
 });
