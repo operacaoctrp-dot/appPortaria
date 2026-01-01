@@ -31,6 +31,15 @@ export interface ColaboradorHistorico {
 export const useHistorico = () => {
   const supabase = useSupabaseClient();
   const supabaseAny: any = useSupabaseClient(); // Para tabelas não tipadas (sem validação de tipos)
+  
+  // Verificar se o cliente Supabase está disponível
+  const isSupabaseAvailable = () => {
+    if (!supabase || !supabaseAny) {
+      console.warn('⚠️ Cliente Supabase não disponível - aguardando inicialização');
+      return false;
+    }
+    return true;
+  };
 
   /**
    * Buscar histórico de um colaborador em uma data específica
@@ -41,6 +50,10 @@ export const useHistorico = () => {
     origem: string = "principal" // 'principal' ou 'sfl'
   ) => {
     try {
+      if (!isSupabaseAvailable()) {
+        return { historico: null, error: new Error('Cliente Supabase não disponível') };
+      }
+      
       console.log(
         `🔍 Buscando histórico - Colaborador: ${colaboradorId}, Data: ${data}, Origem: ${origem}`
       );
@@ -97,6 +110,10 @@ export const useHistorico = () => {
     origem: string = "principal" // 'principal' ou 'sfl'
   ) => {
     try {
+      if (!isSupabaseAvailable()) {
+        return { data: null, error: new Error('Cliente Supabase não disponível') };
+      }
+      
       console.log(
         "💾 Salvando histórico - Colaborador:",
         colaboradorId,
@@ -189,6 +206,10 @@ export const useHistorico = () => {
     origem: string = "principal"
   ) => {
     try {
+      if (!isSupabaseAvailable()) {
+        return { historicos: [], error: new Error('Cliente Supabase não disponível') };
+      }
+      
       console.log(
         `🔍 Buscando todos os históricos para data: ${data}, origem: ${origem}`
       );

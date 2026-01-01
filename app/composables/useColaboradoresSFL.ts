@@ -9,6 +9,15 @@ import { handleDatabaseError } from "~/utils/errorHandler";
 export const useColaboradoresSFL = () => {
   const supabase = useSupabaseClient();
 
+  // Verificar se o cliente Supabase está disponível
+  const isSupabaseAvailable = () => {
+    if (!supabase) {
+      console.warn('⚠️ Cliente Supabase não disponível - aguardando inicialização');
+      return false;
+    }
+    return true;
+  };
+
   // Teste de conectividade
   const testarConexao = async () => {
     try {

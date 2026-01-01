@@ -1520,6 +1520,13 @@ const {
   atualizarVisitante,
 } = useVisitantes();
 
+// Composable para notificações
+const {
+  success: notifySuccess,
+  error: notifyError,
+  warning: notifyWarning,
+} = useNotifications();
+
 // Estado local para colaboradores (writable)
 const colaboradores = ref([]);
 
@@ -1756,9 +1763,9 @@ const iniciarEdicaoCelula = (colaboradorId, campo, valorAtual) => {
       : linhasVisitantes.value;
     const colaborador = lista.find((c) => c.id === colaboradorId);
     if (colaborador && !podeEditarEntradaSaida(colaborador)) {
-      notify.warning(
-        "Preencha o Nome e a Empresa antes de registrar entradas/saídas",
-        "Campos obrigatórios"
+      notifyWarning(
+        "Campos obrigatórios",
+        "Preencha o Nome e a Empresa antes de registrar entradas/saídas"
       );
       return;
     }
@@ -2080,9 +2087,9 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
         minutos < 0 ||
         minutos > 59
       ) {
-        notify.error(
-          "Horário inválido. Use o formato HH:MM (00:00 - 23:59)",
-          "Erro de validação"
+        notifyError(
+          "Erro de validação",
+          "Horário inválido. Use o formato HH:MM (00:00 - 23:59)"
         );
         editandoCelula.value = null;
         valorTemporario.value = "";
@@ -2099,9 +2106,9 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
         if (valorEntrada) {
           const entradaHora = timestampParaHora(valorEntrada);
           if (entradaHora && valorAtual < entradaHora) {
-            notify.error(
-              `A saída não pode ser antes da entrada (${entradaHora})`,
-              "Horário inválido"
+            notifyError(
+              "Horário inválido",
+              `A saída não pode ser antes da entrada (${entradaHora})`
             );
             editandoCelula.value = null;
             valorTemporario.value = "";
@@ -2326,26 +2333,29 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     // Mostrar feedback de sucesso (silencioso se apagar)
     if (dadosAtualizados[campo]) {
-      notify.success("Horário salvo com sucesso", "");
+      notifySuccess(
+        "Sucesso",
+        "Horário salvo com sucesso"
+      );
     }
   } catch (err) {
     console.error("❌ Erro ao salvar célula:", err);
 
     // Verificar se é erro de tabela não existente
     if (err.message?.includes("colaboradores_historico")) {
-      notify.error(
-        "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase.",
-        "Erro de banco de dados"
+      notifyError(
+        "Erro de banco de dados",
+        "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase."
       );
     } else if (err.message?.includes("origem")) {
-      notify.error(
-        "Coluna 'origem' não encontrada. Execute o script SQL para adicionar a coluna.",
-        "Erro de banco de dados"
+      notifyError(
+        "Erro de banco de dados",
+        "Coluna 'origem' não encontrada. Execute o script SQL para adicionar a coluna."
       );
     } else {
-      notify.error(
-        err.message || "Erro desconhecido ao salvar horário",
-        "Erro ao salvar"
+      notifyError(
+        "Erro ao salvar",
+        err.message || "Erro desconhecido ao salvar horário"
       );
     }
   } finally {
@@ -2848,9 +2858,44 @@ const carregarDadosPorData = async (data) => {
   }
 };
 
+// Aguardar inicialização do Supabase
+const aguardarSupabase = async () => {
+  let attempts = 0;
+  const maxAttempts = 50; // 5 segundos no máximo
+  
+  while (attempts < maxAttempts) {
+    try {
+      const supabase = useSupabaseClient();
+      
+      // Verificar se o cliente está disponível
+      if (supabase && supabase.auth) {
+        console.log('✅ Cliente Supabase inicializado - pode carregar dados');
+        return true;
+      }
+    } catch (error) {
+      console.log(`⏳ Aguardando inicialização do Supabase... (${attempts + 1}/${maxAttempts})`);
+    }
+    
+    // Esperar 100ms antes da próxima tentativa
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+  
+  console.error('❌ Timeout: Cliente Supabase não foi inicializado');
+  return false;
+};
+
 // Carregar dados na inicialização
 onMounted(async () => {
   try {
+    // Aguardar inicialização do Supabase
+    const supabaseReady = await aguardarSupabase();
+    
+    if (!supabaseReady) {
+      errorMensagem.value = 'Sistema não está pronto. Recarregue a página.';
+      return;
+    }
+
     // Inicializar linhas vazias para transportadoras e visitantes
     inicializarLinhasTransportadoras();
     inicializarLinhasVisitantes();

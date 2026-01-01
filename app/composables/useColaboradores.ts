@@ -9,9 +9,22 @@ import { handleDatabaseError } from "~/utils/errorHandler";
 export const useColaboradores = () => {
   const supabase = useSupabaseClient();
 
+  // Verificar se o cliente Supabase está disponível
+  const isSupabaseAvailable = () => {
+    if (!supabase) {
+      console.warn('⚠️ Cliente Supabase não disponível - aguardando inicialização');
+      return false;
+    }
+    return true;
+  };
+
   // Teste de conectividade
   const testarConexao = async () => {
     try {
+      if (!isSupabaseAvailable()) {
+        return { success: false, error: new Error('Cliente Supabase não disponível') };
+      }
+
       logger.debug("🧪 Testando conexão com Supabase...");
 
       // Teste simples de conectividade
@@ -39,6 +52,11 @@ export const useColaboradores = () => {
    */
   const buscarColaboradores = async (filtros?: ColaboradorFilter) => {
     try {
+      if (!isSupabaseAvailable()) {
+        error.value = 'Cliente Supabase não disponível';
+        return;
+      }
+
       logger.info("🔍 Iniciando busca de colaboradores...");
 
       // Testar conexão primeiro

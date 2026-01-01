@@ -2,7 +2,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
   console.log("🛡️ Middleware auth executado para:", to.path);
 
   if (typeof window !== "undefined") {
-    const supabase = useSupabaseClient();
+    let supabase;
+
+    try {
+      supabase = useSupabaseClient();
+
+      // Verificar se o cliente Supabase está disponível
+      if (!supabase || !supabase.auth) {
+        console.warn("⚠️ Cliente Supabase não disponível - aguardando...");
+        return;
+      }
+    } catch (error) {
+      console.warn("⚠️ Erro ao obter cliente Supabase:", error);
+      return;
+    }
 
     // Verificar se acabou de fazer login
     const justLoggedIn = sessionStorage.getItem("justLoggedIn");

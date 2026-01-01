@@ -1,9 +1,10 @@
 import { ref } from "vue";
 
-// Usar supabaseAny para acessar tabela não tipada
-const supabaseAny = useSupabaseClient() as any;
-
 export const useVisitantes = () => {
+  // Usar supabaseAny para acessar tabela não tipada
+  // Movido para dentro do composable para garantir que o Nuxt esteja inicializado
+  const supabaseAny = useSupabaseClient() as any;
+
   const loading = ref(false);
   const error = ref<string | null>(null);
 

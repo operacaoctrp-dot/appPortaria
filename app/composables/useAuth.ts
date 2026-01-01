@@ -21,6 +21,15 @@ export const useAuth = (): {
 } => {
   const supabase = useSupabaseClient();
 
+  // Verificar se o cliente Supabase está disponível
+  const isSupabaseAvailable = () => {
+    if (!supabase) {
+      console.warn('⚠️ Cliente Supabase não disponível - aguardando inicialização');
+      return false;
+    }
+    return true;
+  };
+
   // Estado global da autenticação
   const user = useState<User | null>("auth.user", () => null);
   const loading = useState<boolean>("auth.loading", () => false);
@@ -37,6 +46,10 @@ export const useAuth = (): {
     loading.value = true;
 
     try {
+      if (!isSupabaseAvailable()) {
+        return { error: { message: 'Sistema não está pronto. Tente novamente em alguns segundos.' } as AuthError };
+      }
+
       console.log("🔐 useAuth.login: Tentando autenticar...");
       console.log("📧 Email:", email);
       console.log("🌐 Supabase URL:", supabase.supabaseUrl);
