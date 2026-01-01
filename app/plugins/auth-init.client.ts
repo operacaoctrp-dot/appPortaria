@@ -91,7 +91,7 @@ export default defineNuxtPlugin(() => {
           sessionRestored = true;
           authReady.value = true;
         }
-      }, 1000);
+      }, 3000); // Aumentado para 3 segundos em ambientes mais lentos como Cloudflare
 
       // Cleanup: unsubscribe quando não for mais necessário
       if (subscription?.unsubscribe) {

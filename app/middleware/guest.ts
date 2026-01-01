@@ -4,8 +4,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   console.log("  📍 Para:", to.path);
 
   // Guest middleware APENAS para rotas públicas de autenticação
-  const publicAuthRoutes = ["/login", "/recuperar-senha", "/redefinir-senha", "/"];
-  
+  const publicAuthRoutes = [
+    "/login",
+    "/recuperar-senha",
+    "/redefinir-senha",
+    "/",
+  ];
+
   if (!publicAuthRoutes.includes(to.path)) {
     console.log("🔓 Rota protegida - ignorando guest middleware:", to.path);
     return; // Não fazer nada em rotas protegidas

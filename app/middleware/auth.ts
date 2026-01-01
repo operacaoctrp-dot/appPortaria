@@ -13,9 +13,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     console.log("⏳ Middleware: authReady inicial =", authReady.value);
 
-    // Esperar até 5 segundos pelo plugin auth-init completar
+    // Esperar até 10 segundos pelo plugin auth-init completar (aumentado para Cloudflare)
     let waitAttempts = 0;
-    const maxWaitAttempts = 50; // 5 segundos com intervalo de 100ms
+    const maxWaitAttempts = 100; // 10 segundos com intervalo de 100ms
 
     while (!authReady.value && waitAttempts < maxWaitAttempts) {
       console.log("⏳ Aguardando auth.ready... tentativa", waitAttempts + 1);
