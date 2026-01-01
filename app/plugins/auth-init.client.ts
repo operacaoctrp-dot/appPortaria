@@ -1,5 +1,5 @@
 export default defineNuxtPlugin(() => {
-  const user = useState("auth.user");
+  const user = useState("auth.user", () => null);
   const authReady = useState("auth.ready", () => false);
 
   console.log("🔌 Plugin auth-init: Iniciando...");
@@ -17,9 +17,8 @@ export default defineNuxtPlugin(() => {
       }
 
       console.log("🔍 Verificando sessão existente...");
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
 
       if (session?.user) {
         user.value = session.user;
@@ -30,22 +29,25 @@ export default defineNuxtPlugin(() => {
         );
       } else {
         console.log("📭 Nenhuma sessão encontrada");
+        user.value = null;
       }
 
-      // Marcar como pronto mesmo sem sessão
+      // Marcar como pronto - CRÍTICO para middleware continuar
       authReady.value = true;
+      console.log("✅ Plugin auth-init pronto");
 
-      // Monitorar mudanças de autenticação
+      // Monitorar mudanças de autenticação em tempo real
       supabase.auth.onAuthStateChange((event, session) => {
-        console.log("🔔 Auth state changed:", event);
+        console.log("🔔 Auth state changed:", event, session?.user?.email);
         user.value = session?.user || null;
       });
     } catch (err) {
       console.error("❌ Erro no plugin auth-init:", err);
       authReady.value = true;
+      user.value = null;
     }
   };
 
-  // Executar sem bloquear o plugin
+  // Executar imediatamente - fire and forget
   initAuth();
 });

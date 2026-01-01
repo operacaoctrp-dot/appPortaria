@@ -7,45 +7,30 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   try {
-    const supabase = useSupabaseClient();
+    // Aguardar que o plugin auth-init complete a restauração
+    const authReady = useState("auth.ready", () => false);
+    const user = useState("auth.user");
 
-    if (!supabase || !supabase.auth) {
-      console.warn("⚠️ Cliente Supabase não disponível");
-      return navigateTo("/login");
-    }
-
-    // Dar um tempo mínimo para o Supabase restaurar a sessão (100ms inicial)
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Tentar obter sessão com múltiplas tentativas (máximo 3 segundos)
-    let session = null;
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    while (attempts < maxAttempts) {
-      const { data } = await supabase.auth.getSession();
-      session = data.session;
-
-      if (session?.user) {
-        console.log("✅ Sessão encontrada na tentativa", attempts + 1);
-        return; // Permitir acesso
-      }
-
-      attempts++;
-      // Aguardar 100ms antes da próxima tentativa
+    // Esperar até 3 segundos pelo plugin auth-init completar
+    let waitAttempts = 0;
+    while (!authReady.value && waitAttempts < 30) {
+      console.log("⏳ Aguardando auth.ready...", waitAttempts + 1);
       await new Promise((resolve) => setTimeout(resolve, 100));
+      waitAttempts++;
     }
 
-    // Sem sessão após 3 segundos - redirecionar para login
-    console.log(
-      "❌ Sem autenticação após",
-      attempts,
-      "tentativas - redirecionando para login"
-    );
+    console.log("✅ Auth inicializado. user:", user.value?.email || "nenhum");
+
+    if (user.value?.id) {
+      console.log("✅ Usuário autenticado:", user.value.email);
+      return; // Permitir acesso
+    }
+
+    // Sem usuário - redirecionar para login
+    console.log("❌ Sem autenticação - redirecionando para login");
     return navigateTo("/login");
   } catch (error) {
     console.error("❌ Erro no middleware auth:", error);
-    // Em caso de erro, redirecionar para login para segurança
     return navigateTo("/login");
   }
 });
