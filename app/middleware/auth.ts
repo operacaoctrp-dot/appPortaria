@@ -12,13 +12,38 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const user = useState("auth.user", () => null);
 
     console.log("⏳ Middleware: authReady inicial =", authReady.value);
+    console.log(
+      "👤 Middleware: user.value inicial =",
+      user.value?.email || "null"
+    );
 
-    // Esperar até 10 segundos pelo plugin auth-init completar (aumentado para Cloudflare)
+    // Se já está pronto, não precisa aguardar
+    if (authReady.value) {
+      console.log("✅ Auth já pronto, verificando usuário...");
+      if (user.value?.id) {
+        console.log("✅ Middleware: Usuário autenticado -", user.value.email);
+        return; // Permitir acesso
+      }
+      console.log(
+        "❌ Middleware: Sem autenticação - redirecionando para /login"
+      );
+      return navigateTo("/login");
+    }
+
+    // Esperar até 10 segundos pelo plugin auth-init completar
     let waitAttempts = 0;
     const maxWaitAttempts = 100; // 10 segundos com intervalo de 100ms
 
     while (!authReady.value && waitAttempts < maxWaitAttempts) {
-      console.log("⏳ Aguardando auth.ready... tentativa", waitAttempts + 1);
+      if (waitAttempts % 10 === 0) {
+        // Log a cada 1 segundo
+        console.log(
+          "⏳ Aguardando auth.ready... tentativa",
+          waitAttempts + 1,
+          "user:",
+          user.value?.email || "null"
+        );
+      }
       await new Promise((resolve) => setTimeout(resolve, 100));
       waitAttempts++;
     }
@@ -26,16 +51,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
     console.log(
       "✅ Middleware: Auth inicializado após",
       waitAttempts,
-      "tentativas"
+      "tentativas, authReady =",
+      authReady.value,
+      ", user =",
+      user.value?.email || "null"
     );
-    console.log("👤 Middleware: user.value =", user.value?.email || "null");
 
     if (user.value?.id) {
       console.log("✅ Middleware: Usuário autenticado -", user.value.email);
       return; // Permitir acesso
     }
 
-    // Sem usuário - redirecionar para login
+    // Sem usuário após espera - redirecionar para login
     console.log("❌ Middleware: Sem autenticação - redirecionando para /login");
     return navigateTo("/login");
   } catch (error) {

@@ -58,7 +58,7 @@ export default defineNuxtPlugin(() => {
           sessionRestored = true;
           authReady.value = true;
           console.log(
-            "✅ Plugin auth-init pronto. user.value:",
+            "✅✅✅ AUTHREADY SETADO PARA TRUE! user.value:",
             user.value?.email || "null"
           );
         }
