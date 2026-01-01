@@ -1,5 +1,6 @@
 export default defineNuxtPlugin(async (nuxtApp) => {
   const user = useState("auth.user");
+  const authReady = useState("auth.ready", () => false);
 
   console.log("🔌 Plugin auth-init: Iniciando...");
 
@@ -11,6 +12,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       // Verificar se o cliente Supabase está disponível
       if (!supabase || !supabase.auth) {
         console.warn("⚠️ Cliente Supabase não disponível ainda");
+        authReady.value = false;
         return;
       }
 
@@ -30,6 +32,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         console.log("❌ Nenhuma sessão encontrada");
       }
 
+      // Marcar como pronto mesmo sem sessão (pode estar em página pública)
+      authReady.value = true;
+
       // Monitorar mudanças de autenticação
       supabase.auth.onAuthStateChange((event, session) => {
         console.log("🔔 Auth state changed:", event);
@@ -41,6 +46,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       });
     } catch (err) {
       console.error("❌ Erro no plugin auth-init:", err);
+      authReady.value = true; // Marcar como pronto mesmo com erro
     }
   });
 });
