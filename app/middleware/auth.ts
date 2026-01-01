@@ -32,11 +32,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     }
 
+    // Verificar se há tokens do Supabase no localStorage
+    const hasStoredSession = Object.keys(localStorage).some(
+      (key) => key.startsWith("sb-") && key.endsWith("-auth-token")
+    );
+
     // Aguardar um pouco para a sessão ser restaurada do localStorage
     // Isso é necessário porque o Supabase restaura a sessão de forma assíncrona
     let session = null;
     let attempts = 0;
-    const maxAttempts = 10; // 1 segundo no máximo
+    const maxAttempts = hasStoredSession ? 20 : 3; // Mais tentativas se há token armazenado
 
     while (attempts < maxAttempts) {
       const { data } = await supabase.auth.getSession();
@@ -46,15 +51,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
         console.log("✅ Sessão encontrada na tentativa", attempts + 1);
         break;
       }
-
-      // Verificar se há token no localStorage (indica que deveria haver sessão)
-      const hasStoredSession =
-        localStorage.getItem(
-          "sb-" + location.hostname.split(".")[0] + "-auth-token"
-        ) ||
-        Object.keys(localStorage).some(
-          (key) => key.includes("supabase") && key.includes("auth")
-        );
 
       if (!hasStoredSession && attempts >= 2) {
         // Não há sessão armazenada, não precisa continuar tentando
