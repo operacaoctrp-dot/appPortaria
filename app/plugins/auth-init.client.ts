@@ -1,18 +1,18 @@
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const user = useState("auth.user");
   const authReady = useState("auth.ready", () => false);
 
   console.log("🔌 Plugin auth-init: Iniciando...");
 
-  // Aguardar o hook app:mounted para garantir que o Supabase esteja disponível
-  nuxtApp.hook("app:mounted", async () => {
+  // Inicializar autenticação de forma não-bloqueante
+  const initAuth = async () => {
     try {
       const supabase = useSupabaseClient();
 
       // Verificar se o cliente Supabase está disponível
       if (!supabase || !supabase.auth) {
-        console.warn("⚠️ Cliente Supabase não disponível ainda");
-        authReady.value = false;
+        console.warn("⚠️ Cliente Supabase não disponível");
+        authReady.value = true;
         return;
       }
 
@@ -29,24 +29,23 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           new Date((session.expires_at ?? 0) * 1000).toLocaleString()
         );
       } else {
-        console.log("❌ Nenhuma sessão encontrada");
+        console.log("📭 Nenhuma sessão encontrada");
       }
 
-      // Marcar como pronto mesmo sem sessão (pode estar em página pública)
+      // Marcar como pronto mesmo sem sessão
       authReady.value = true;
 
       // Monitorar mudanças de autenticação
       supabase.auth.onAuthStateChange((event, session) => {
         console.log("🔔 Auth state changed:", event);
         user.value = session?.user || null;
-
-        if (session?.user) {
-          console.log("👤 Usuário:", session.user.email);
-        }
       });
     } catch (err) {
       console.error("❌ Erro no plugin auth-init:", err);
-      authReady.value = true; // Marcar como pronto mesmo com erro
+      authReady.value = true;
     }
-  });
+  };
+
+  // Executar sem bloquear o plugin
+  initAuth();
 });
