@@ -1,63 +1,51 @@
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin(async () => {
   const user = useState("auth.user", () => null);
   const authReady = useState("auth.ready", () => false);
 
   console.log("🔌 Plugin auth-init: Iniciando...");
 
-  // Setup listener IMEDIATAMENTE
-  let listenerSetup = false;
-  
-  const setupAuthListener = () => {
-    if (listenerSetup) return;
-    listenerSetup = true;
+  const supabase = useSupabaseClient();
+  if (!supabase || !supabase.auth) {
+    console.warn("⚠️ Supabase não disponível");
+    authReady.value = true;
+    return;
+  }
+
+  // 1️⃣ RESTAURAR SESSÃO IMEDIATAMENTE (síncrono quando possível)
+  try {
+    console.log("📋 Restaurando sessão da localStorage...");
+    const { data, error } = await supabase.auth.getSession();
     
-    try {
-      const supabase = useSupabaseClient();
-      if (!supabase || !supabase.auth) {
-        console.warn("⚠️ Supabase não disponível para listener");
-        authReady.value = true;
-        return;
-      }
-
-      console.log("📌 Configurando listener de autenticação...");
-
-      supabase.auth.onAuthStateChange((event, session) => {
-        console.log("🔔 Auth state changed:", event, session?.user?.email || "null");
-        
-        if (session?.user) {
-          user.value = session.user;
-          console.log("✅ Usuário setado:", session.user.email);
-        } else {
-          user.value = null;
-          console.log("❌ Usuário limpo");
-        }
-
-        // Marcar como pronto no primeiro evento
-        authReady.value = true;
-        console.log("✅✅✅ AUTHREADY = TRUE");
-      });
-    } catch (err) {
-      console.error("❌ Erro ao setup listener:", err);
-      authReady.value = true;
+    if (data?.session?.user) {
+      user.value = data.session.user;
+      console.log("✅ Sessão restaurada:", data.session.user.email);
+    } else {
+      console.log("❌ Nenhuma sessão encontrada");
+      user.value = null;
     }
-  };
+  } catch (err) {
+    console.error("❌ Erro ao restaurar sessão:", err);
+    user.value = null;
+  }
 
-  // Setup imediatamente se possível
-  setupAuthListener();
+  // 2️⃣ CONFIGURAR LISTENER para futuras mudanças
+  console.log("📌 Configurando listener de autenticação...");
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log("🔔 Auth state changed:", event, session?.user?.email || "null");
 
-  // Fallback: tentar setup novamente em 100ms se não conseguiu
-  setTimeout(() => {
-    if (!listenerSetup) {
-      console.log("🔄 Tentando setup listener novamente...");
-      setupAuthListener();
+    if (session?.user) {
+      user.value = session.user;
+      console.log("✅ Usuário atualizado:", session.user.email);
+    } else {
+      user.value = null;
+      console.log("❌ Usuário limpo");
     }
-  }, 100);
 
-  // Timeout final: marcar como pronto mesmo sem listener
-  setTimeout(() => {
-    if (!authReady.value) {
-      console.log("⏰ Timeout: marcando authReady = true");
-      authReady.value = true;
-    }
-  }, 5000);
+    authReady.value = true;
+    console.log("✅✅✅ AUTHREADY = TRUE");
+  });
+
+  // 3️⃣ MARCAR COMO PRONTO
+  authReady.value = true;
+  console.log("✅ Plugin auth-init: Pronto");
 });
