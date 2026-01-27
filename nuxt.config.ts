@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@nuxtjs/supabase",
     "@pinia/nuxt",
-    "@vueuse/nuxt",
     "@vite-pwa/nuxt",
   ],
 
@@ -25,14 +24,15 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: "apple-mobile-web-app-capable", content: "yes" },
-        { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+        {
+          name: "apple-mobile-web-app-status-bar-style",
+          content: "black-translucent",
+        },
       ],
-      link: [
-        { rel: "apple-touch-icon", href: "/icons/icon-192x192.png" },
-      ],
+      link: [{ rel: "apple-touch-icon", href: "/icons/icon-192x192.png" }],
     },
   },
-  
+
   // Configuração do Supabase
   supabase: {
     url: process.env.NUXT_PUBLIC_SUPABASE_URL,

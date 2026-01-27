@@ -15,7 +15,7 @@ export default defineNuxtPlugin(async () => {
   try {
     console.log("📋 Restaurando sessão da localStorage...");
     const { data, error } = await supabase.auth.getSession();
-    
+
     if (data?.session?.user) {
       user.value = data.session.user;
       console.log("✅ Sessão restaurada:", data.session.user.email);
@@ -31,7 +31,11 @@ export default defineNuxtPlugin(async () => {
   // 2️⃣ CONFIGURAR LISTENER para futuras mudanças
   console.log("📌 Configurando listener de autenticação...");
   supabase.auth.onAuthStateChange((event, session) => {
-    console.log("🔔 Auth state changed:", event, session?.user?.email || "null");
+    console.log(
+      "🔔 Auth state changed:",
+      event,
+      session?.user?.email || "null"
+    );
 
     if (session?.user) {
       user.value = session.user;
