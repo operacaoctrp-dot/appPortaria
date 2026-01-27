@@ -119,6 +119,7 @@ export default defineNuxtConfig({
   // Otimizações de build
   nitro: {
     compressPublicAssets: true,
+    preset: "vercel",
   },
 
   vite: {
