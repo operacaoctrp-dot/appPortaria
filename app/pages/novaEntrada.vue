@@ -2133,26 +2133,8 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
         return;
       }
 
-      // Validar se saída é depois da entrada correspondente
-      if (campo.startsWith("sai")) {
-        const numeroEntrada = campo.replace("sai", "");
-        const campoEntrada = `ent${numeroEntrada}`;
-        const valorEntrada = colaborador[campoEntrada];
-
-        if (valorEntrada) {
-          const entradaHora = timestampParaHora(valorEntrada);
-          if (entradaHora && valorAtual < entradaHora) {
-            notifyError(
-              "Horário inválido",
-              `A saída não pode ser antes da entrada (${entradaHora})`,
-            );
-            editandoCelula.value = null;
-            valorTemporario.value = "";
-            salvandoCelula.value = false;
-            return;
-          }
-        }
-      }
+      // REMOVIDA validação de saída < entrada para permitir turnos noturnos
+      // (funcionários que entram em um dia e saem no dia seguinte)
     }
 
     // Preparar dados para atualização
