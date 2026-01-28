@@ -2368,14 +2368,11 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     console.log("✅ Histórico salvo com sucesso!");
 
-    // Atualizar valor local ANTES de cancelar edição
-    colaborador[campo] = dadosAtualizados[campo];
-
-    // Aguardar próximo tick do DOM para garantir que o valor foi atualizado
-    await nextTick();
-
-    // Cancelar edição após atualização do valor
+    // Cancelar edição imediatamente
     cancelarEdicaoCelula();
+
+    // Recarregar dados da data atual para refletir o que foi salvo
+    await carregarDadosPorData(dataFiltro.value);
 
     // Mostrar feedback de sucesso (silencioso se apagar)
     if (dadosAtualizados[campo]) {
