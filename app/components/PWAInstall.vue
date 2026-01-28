@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { useOnline } from '@vueuse/core';
+import { useOnline } from "@vueuse/core";
 import BaseButton from "~/components/common/BaseButton.vue";
 
 interface Props {

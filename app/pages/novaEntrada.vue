@@ -303,7 +303,10 @@
                 <tr>
                   <!-- Matrícula/RG -->
                   <th
-                    v-if="abaFilial !== 'transportadoras' && abaFilial !== 'visitantes'"
+                    v-if="
+                      abaFilial !== 'transportadoras' &&
+                      abaFilial !== 'visitantes'
+                    "
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
                     Matrícula
@@ -314,14 +317,14 @@
                   >
                     RG
                   </th>
-                  
+
                   <!-- Nome -->
                   <th
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
                     Nome
                   </th>
-                  
+
                   <!-- Função (não aparece em visitantes) -->
                   <th
                     v-if="abaFilial !== 'visitantes'"
@@ -329,14 +332,19 @@
                   >
                     Função
                   </th>
-                  
+
                   <!-- Empresa -->
                   <th
                     class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"
                   >
-                    {{ abaFilial === "transportadoras" || abaFilial === "visitantes" ? "Empresa" : "Filial" }}
+                    {{
+                      abaFilial === "transportadoras" ||
+                      abaFilial === "visitantes"
+                        ? "Empresa"
+                        : "Filial"
+                    }}
                   </th>
-                  
+
                   <!-- Colunas específicas de visitantes -->
                   <th
                     v-if="abaFilial === 'visitantes'"
@@ -461,7 +469,10 @@
                 >
                   <!-- Matrícula (não aparece em transportadoras e visitantes) -->
                   <td
-                    v-if="abaFilial !== 'transportadoras' && abaFilial !== 'visitantes'"
+                    v-if="
+                      abaFilial !== 'transportadoras' &&
+                      abaFilial !== 'visitantes'
+                    "
                     class="px-6 py-4 whitespace-nowrap"
                   >
                     <div class="flex items-center">
@@ -474,7 +485,7 @@
                       </div>
                     </div>
                   </td>
-                  
+
                   <!-- RG (só aparece em visitantes) -->
                   <td
                     v-if="abaFilial === 'visitantes'"
@@ -499,7 +510,7 @@
                           iniciarEdicaoCampoCadastral(
                             colaborador.id,
                             'rg',
-                            colaborador.rg
+                            colaborador.rg,
                           )
                         "
                         class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
@@ -521,12 +532,15 @@
                       </button>
                     </div>
                   </td>
-                  
+
                   <!-- Nome -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <!-- Transportadoras e Visitantes: modo edição com ícone -->
                     <div
-                      v-if="abaFilial === 'transportadoras' || abaFilial === 'visitantes'"
+                      v-if="
+                        abaFilial === 'transportadoras' ||
+                        abaFilial === 'visitantes'
+                      "
                       class="flex items-center gap-2"
                     >
                       <input
@@ -550,7 +564,7 @@
                           iniciarEdicaoCampoCadastral(
                             colaborador.id,
                             'nome',
-                            colaborador.nome
+                            colaborador.nome,
                           )
                         "
                         class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
@@ -576,9 +590,12 @@
                       {{ colaborador.nome || "Não informado" }}
                     </div>
                   </td>
-                  
+
                   <!-- Função (não aparece em visitantes) -->
-                  <td v-if="abaFilial !== 'visitantes'" class="px-6 py-4 whitespace-nowrap">
+                  <td
+                    v-if="abaFilial !== 'visitantes'"
+                    class="px-6 py-4 whitespace-nowrap"
+                  >
                     <!-- Transportadoras: modo edição com ícone -->
                     <div
                       v-if="abaFilial === 'transportadoras'"
@@ -611,7 +628,7 @@
                           iniciarEdicaoCampoCadastral(
                             colaborador.id,
                             'funcao',
-                            colaborador.funcao
+                            colaborador.funcao,
                           )
                         "
                         class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
@@ -646,7 +663,10 @@
                   >
                     <!-- Transportadoras e Visitantes: modo edição com ícone -->
                     <div
-                      v-if="abaFilial === 'transportadoras' || abaFilial === 'visitantes'"
+                      v-if="
+                        abaFilial === 'transportadoras' ||
+                        abaFilial === 'visitantes'
+                      "
                       class="flex items-center gap-2"
                     >
                       <input
@@ -673,7 +693,7 @@
                           iniciarEdicaoCampoCadastral(
                             colaborador.id,
                             'empresa',
-                            colaborador.empresa
+                            colaborador.empresa,
                           )
                         "
                         class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
@@ -699,7 +719,7 @@
                       {{ colaborador.filial || "Não informado" }}
                     </span>
                   </td>
-                  
+
                   <!-- Autorização (só para visitantes) -->
                   <td
                     v-if="abaFilial === 'visitantes'"
@@ -707,24 +727,34 @@
                   >
                     <div class="flex items-center gap-2">
                       <input
-                        v-if="isCampoCadastralEditando(colaborador.id, 'autorizacao')"
+                        v-if="
+                          isCampoCadastralEditando(
+                            colaborador.id,
+                            'autorizacao',
+                          )
+                        "
                         v-model="valorCadastralTemporario"
                         :data-campo-cadastral="`${colaborador.id}-autorizacao`"
                         type="text"
                         placeholder="Nome do autorizador..."
                         class="flex-1 px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         @blur="salvarCampoCadastral(colaborador, 'autorizacao')"
-                        @keydown.tab="salvarCampoCadastral(colaborador, 'autorizacao')"
+                        @keydown.tab="
+                          salvarCampoCadastral(colaborador, 'autorizacao')
+                        "
                       />
                       <span v-else class="flex-1 text-sm">
-                        {{ colaborador.autorizacao || "Clique no ícone para editar" }}
+                        {{
+                          colaborador.autorizacao ||
+                          "Clique no ícone para editar"
+                        }}
                       </span>
                       <button
                         @click="
                           iniciarEdicaoCampoCadastral(
                             colaborador.id,
                             'autorizacao',
-                            colaborador.autorizacao
+                            colaborador.autorizacao,
                           )
                         "
                         class="p-1 text-neutral-400 hover:text-primary-600 transition-colors"
@@ -746,7 +776,7 @@
                       </button>
                     </div>
                   </td>
-                  
+
                   <!-- Informada Portaria (só para visitantes) -->
                   <td
                     v-if="abaFilial === 'visitantes'"
@@ -754,7 +784,9 @@
                   >
                     <select
                       v-model="colaborador.informada_portaria"
-                      @change="salvarCampoCadastral(colaborador, 'informada_portaria')"
+                      @change="
+                        salvarCampoCadastral(colaborador, 'informada_portaria')
+                      "
                       class="px-3 py-1.5 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option :value="null">Selecionar...</option>
@@ -802,7 +834,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'ent1',
-                          colaborador.ent1
+                          colaborador.ent1,
                         )
                       "
                       :class="[
@@ -857,7 +889,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'sai1',
-                          colaborador.sai1
+                          colaborador.sai1,
                         )
                       "
                       :class="[
@@ -911,7 +943,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'ent2',
-                          colaborador.ent2
+                          colaborador.ent2,
                         )
                       "
                       :class="[
@@ -965,7 +997,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'sai2',
-                          colaborador.sai2
+                          colaborador.sai2,
                         )
                       "
                       :class="[
@@ -1019,7 +1051,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'ent3',
-                          colaborador.ent3
+                          colaborador.ent3,
                         )
                       "
                       :class="[
@@ -1073,7 +1105,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'sai3',
-                          colaborador.sai3
+                          colaborador.sai3,
                         )
                       "
                       :class="[
@@ -1127,7 +1159,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'ent4',
-                          colaborador.ent4
+                          colaborador.ent4,
                         )
                       "
                       :class="[
@@ -1181,7 +1213,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'sai4',
-                          colaborador.sai4
+                          colaborador.sai4,
                         )
                       "
                       :class="[
@@ -1235,7 +1267,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'ent5',
-                          colaborador.ent5
+                          colaborador.ent5,
                         )
                       "
                       :class="[
@@ -1289,7 +1321,7 @@
                         iniciarEdicaoCelula(
                           colaborador.id,
                           'sai5',
-                          colaborador.sai5
+                          colaborador.sai5,
                         )
                       "
                       :class="[
@@ -1514,11 +1546,8 @@ const {
 } = useHistorico();
 
 // Composable para visitantes
-const {
-  buscarVisitantes,
-  criarVisitante,
-  atualizarVisitante,
-} = useVisitantes();
+const { buscarVisitantes, criarVisitante, atualizarVisitante } =
+  useVisitantes();
 
 // Composable para notificações
 const {
@@ -1554,7 +1583,7 @@ const inicializarLinhasTransportadoras = () => {
       ent5: "",
       sai5: "",
       isTemp: true,
-    })
+    }),
   );
 };
 
@@ -1584,7 +1613,7 @@ const inicializarLinhasVisitantes = () => {
       ent5: "",
       sai5: "",
       isTemp: true,
-    })
+    }),
   );
 };
 
@@ -1681,7 +1710,7 @@ const colaboradoresFiltrados = computed(() => {
   if (abaFilial.value === "transportadoras") {
     return linhasTransportadoras.value;
   }
-  
+
   // Se for aba de visitantes, retornar linhas vazias editáveis
   if (abaFilial.value === "visitantes") {
     return linhasVisitantes.value;
@@ -1699,7 +1728,7 @@ const colaboradoresFiltrados = computed(() => {
         colaborador.nome?.toLowerCase().includes(termo) ||
         colaborador.matricula?.toString().includes(termo) ||
         colaborador.funcao?.toLowerCase().includes(termo) ||
-        colaborador.filial?.toLowerCase().includes(termo)
+        colaborador.filial?.toLowerCase().includes(termo),
     );
   }
 
@@ -1721,12 +1750,12 @@ const iniciarEdicao = (colaborador) => {
 
     if (colaboradorParaEdicao[entKey]) {
       colaboradorParaEdicao[entKey] = timestampParaHora(
-        colaboradorParaEdicao[entKey]
+        colaboradorParaEdicao[entKey],
       );
     }
     if (colaboradorParaEdicao[saiKey]) {
       colaboradorParaEdicao[saiKey] = timestampParaHora(
-        colaboradorParaEdicao[saiKey]
+        colaboradorParaEdicao[saiKey],
       );
     }
   }
@@ -1743,7 +1772,10 @@ const cancelarEdicao = () => {
 // Funções para edição inline de células individuais
 const podeEditarEntradaSaida = (colaborador) => {
   // Para transportadoras e visitantes, verificar se nome e empresa estão preenchidos
-  if (abaFilial.value === "transportadoras" || abaFilial.value === "visitantes") {
+  if (
+    abaFilial.value === "transportadoras" ||
+    abaFilial.value === "visitantes"
+  ) {
     return (
       colaborador.nome &&
       colaborador.nome.trim() !== "" &&
@@ -1757,15 +1789,19 @@ const podeEditarEntradaSaida = (colaborador) => {
 
 const iniciarEdicaoCelula = (colaboradorId, campo, valorAtual) => {
   // Se for transportadoras ou visitantes, verificar se pode editar
-  if (abaFilial.value === "transportadoras" || abaFilial.value === "visitantes") {
-    const lista = abaFilial.value === "transportadoras" 
-      ? linhasTransportadoras.value 
-      : linhasVisitantes.value;
+  if (
+    abaFilial.value === "transportadoras" ||
+    abaFilial.value === "visitantes"
+  ) {
+    const lista =
+      abaFilial.value === "transportadoras"
+        ? linhasTransportadoras.value
+        : linhasVisitantes.value;
     const colaborador = lista.find((c) => c.id === colaboradorId);
     if (colaborador && !podeEditarEntradaSaida(colaborador)) {
       notifyWarning(
         "Campos obrigatórios",
-        "Preencha o Nome e a Empresa antes de registrar entradas/saídas"
+        "Preencha o Nome e a Empresa antes de registrar entradas/saídas",
       );
       return;
     }
@@ -1804,7 +1840,7 @@ const iniciarEdicaoCampoCadastral = (colaboradorId, campo, valorAtual) => {
   // Focar no input após a próxima atualização do DOM
   nextTick(() => {
     const input = document.querySelector(
-      `input[data-campo-cadastral="${chave}"]`
+      `input[data-campo-cadastral="${chave}"]`,
     );
     if (input) {
       input.focus();
@@ -1820,7 +1856,7 @@ const salvarCampoCadastral = async (colaborador, campo) => {
     salvandoCelula.value = true;
 
     // Atualizar o valor no colaborador
-    if (campo === 'informada_portaria') {
+    if (campo === "informada_portaria") {
       // Para select de Sim/Não, já está no colaborador.informada_portaria
       // Não precisa de valorCadastralTemporario
     } else {
@@ -1878,7 +1914,7 @@ const salvarDadosCadastraisTransportadora = async (colaborador) => {
 
       // Substituir linha temporária pela real
       const index = linhasTransportadoras.value.findIndex((t) =>
-        String(t.id).startsWith("temp-")
+        String(t.id).startsWith("temp-"),
       );
       if (index !== -1) {
         linhasTransportadoras.value[index] = {
@@ -1906,7 +1942,7 @@ const salvarDadosCadastraisTransportadora = async (colaborador) => {
     const { historico: historicoColaborador } = await buscarHistoricoPorData(
       colaboradorId,
       dataFiltro.value,
-      "transportadoras"
+      "transportadoras",
     );
 
     // Preparar dados do histórico mantendo entradas/saídas existentes
@@ -1931,7 +1967,7 @@ const salvarDadosCadastraisTransportadora = async (colaborador) => {
       colaboradorId,
       dataFiltro.value,
       dadosHistorico,
-      "transportadoras"
+      "transportadoras",
     );
 
     console.log("✅ Histórico atualizado");
@@ -1976,7 +2012,7 @@ const salvarDadosCadastraisVisitante = async (colaborador) => {
 
       // Substituir linha temporária pela real
       const index = linhasVisitantes.value.findIndex((v) =>
-        String(v.id).startsWith("temp-visitante-")
+        String(v.id).startsWith("temp-visitante-"),
       );
       if (index !== -1) {
         linhasVisitantes.value[index] = {
@@ -2006,7 +2042,7 @@ const salvarDadosCadastraisVisitante = async (colaborador) => {
     const { historico: historicoColaborador } = await buscarHistoricoPorData(
       colaboradorId,
       dataFiltro.value,
-      "visitantes"
+      "visitantes",
     );
 
     // Preparar dados do histórico mantendo entradas/saídas existentes
@@ -2032,7 +2068,7 @@ const salvarDadosCadastraisVisitante = async (colaborador) => {
       colaboradorId,
       dataFiltro.value,
       dadosHistorico,
-      "visitantes"
+      "visitantes",
     );
 
     console.log("✅ Histórico atualizado");
@@ -2058,7 +2094,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     const valorAtual = valorTemporario.value;
     console.log(
-      `💾 Salvando ${campo} para colaborador ${colaboradorId}: ${valorAtual}`
+      `💾 Salvando ${campo} para colaborador ${colaboradorId}: ${valorAtual}`,
     );
 
     // Buscar colaborador/transportadora/visitante para pegar dados
@@ -2066,8 +2102,8 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       abaFilial.value === "transportadoras"
         ? linhasTransportadoras.value.find((c) => c.id === colaboradorId)
         : abaFilial.value === "visitantes"
-        ? linhasVisitantes.value.find((c) => c.id === colaboradorId)
-        : colaboradores.value.find((c) => c.id === colaboradorId);
+          ? linhasVisitantes.value.find((c) => c.id === colaboradorId)
+          : colaboradores.value.find((c) => c.id === colaboradorId);
 
     console.log("👤 Colaborador encontrado:", colaborador ? "SIM" : "NÃO");
     if (!colaborador) {
@@ -2089,7 +2125,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       ) {
         notifyError(
           "Erro de validação",
-          "Horário inválido. Use o formato HH:MM (00:00 - 23:59)"
+          "Horário inválido. Use o formato HH:MM (00:00 - 23:59)",
         );
         editandoCelula.value = null;
         valorTemporario.value = "";
@@ -2108,7 +2144,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
           if (entradaHora && valorAtual < entradaHora) {
             notifyError(
               "Horário inválido",
-              `A saída não pode ser antes da entrada (${entradaHora})`
+              `A saída não pode ser antes da entrada (${entradaHora})`,
             );
             editandoCelula.value = null;
             valorTemporario.value = "";
@@ -2127,14 +2163,14 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       const [horas, minutos] = valorAtual.split(":");
 
       console.log(
-        `🕐 Convertendo ${campo}: ${valorAtual} (${horas}:${minutos})`
+        `🕐 Convertendo ${campo}: ${valorAtual} (${horas}:${minutos})`,
       );
 
       // Criar timestamp usando UTC para evitar problemas de fuso horário
       // Formato: YYYY-MM-DDTHH:MM:00.000Z
       const timestampISO = `${dataFiltro.value}T${String(horas).padStart(
         2,
-        "0"
+        "0",
       )}:${String(minutos).padStart(2, "0")}:00.000Z`;
 
       console.log(`📅 Timestamp ISO criado: ${timestampISO}`);
@@ -2169,7 +2205,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
         // Substituir linha temporária pela real
         const index = linhasTransportadoras.value.findIndex((t) =>
-          String(t.id).startsWith("temp-")
+          String(t.id).startsWith("temp-"),
         );
         if (index !== -1) {
           linhasTransportadoras.value[index] = {
@@ -2208,7 +2244,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
         // Substituir linha temporária pela real
         const index = linhasVisitantes.value.findIndex((v) =>
-          String(v.id).startsWith("temp-visitante-")
+          String(v.id).startsWith("temp-visitante-"),
         );
         if (index !== -1) {
           linhasVisitantes.value[index] = {
@@ -2233,7 +2269,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     const { historico: historicoColaborador } = await buscarHistoricoPorData(
       colaboradorId,
       dataFiltro.value,
-      abaFilial.value
+      abaFilial.value,
     );
     console.log("📋 Histórico encontrado:", historicoColaborador);
 
@@ -2259,43 +2295,50 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
             [campo]: dadosAtualizados[campo],
           }
         : abaFilial.value === "visitantes"
-        ? {
-            // Para visitantes: salvar no histórico (empresa vai para campo filial)
-            rg: colaborador.rg || historicoColaborador?.rg || null,
-            nome: colaborador.nome || historicoColaborador?.nome || null,
-            filial: colaborador.empresa || historicoColaborador?.filial || null, // Salva empresa no campo filial
-            autorizacao: colaborador.autorizacao || historicoColaborador?.autorizacao || null,
-            informada_portaria: colaborador.informada_portaria !== null ? colaborador.informada_portaria : historicoColaborador?.informada_portaria,
-            ent1: historicoColaborador?.ent1 || null,
-            sai1: historicoColaborador?.sai1 || null,
-            ent2: historicoColaborador?.ent2 || null,
-            sai2: historicoColaborador?.sai2 || null,
-            ent3: historicoColaborador?.ent3 || null,
-            sai3: historicoColaborador?.sai3 || null,
-            ent4: historicoColaborador?.ent4 || null,
-            sai4: historicoColaborador?.sai4 || null,
-            ent5: historicoColaborador?.ent5 || null,
-            sai5: historicoColaborador?.sai5 || null,
-            [campo]: dadosAtualizados[campo],
-          }
-        : {
-            // Para outras abas: incluir dados cadastrais
-            nome: colaborador.nome,
-            funcao: colaborador.funcao,
-            filial: colaborador.filial,
-            matricula: colaborador.matricula,
-            ent1: historicoColaborador?.ent1 || null,
-            sai1: historicoColaborador?.sai1 || null,
-            ent2: historicoColaborador?.ent2 || null,
-            sai2: historicoColaborador?.sai2 || null,
-            ent3: historicoColaborador?.ent3 || null,
-            sai3: historicoColaborador?.sai3 || null,
-            ent4: historicoColaborador?.ent4 || null,
-            sai4: historicoColaborador?.sai4 || null,
-            ent5: historicoColaborador?.ent5 || null,
-            sai5: historicoColaborador?.sai5 || null,
-            [campo]: dadosAtualizados[campo],
-          };
+          ? {
+              // Para visitantes: salvar no histórico (empresa vai para campo filial)
+              rg: colaborador.rg || historicoColaborador?.rg || null,
+              nome: colaborador.nome || historicoColaborador?.nome || null,
+              filial:
+                colaborador.empresa || historicoColaborador?.filial || null, // Salva empresa no campo filial
+              autorizacao:
+                colaborador.autorizacao ||
+                historicoColaborador?.autorizacao ||
+                null,
+              informada_portaria:
+                colaborador.informada_portaria !== null
+                  ? colaborador.informada_portaria
+                  : historicoColaborador?.informada_portaria,
+              ent1: historicoColaborador?.ent1 || null,
+              sai1: historicoColaborador?.sai1 || null,
+              ent2: historicoColaborador?.ent2 || null,
+              sai2: historicoColaborador?.sai2 || null,
+              ent3: historicoColaborador?.ent3 || null,
+              sai3: historicoColaborador?.sai3 || null,
+              ent4: historicoColaborador?.ent4 || null,
+              sai4: historicoColaborador?.sai4 || null,
+              ent5: historicoColaborador?.ent5 || null,
+              sai5: historicoColaborador?.sai5 || null,
+              [campo]: dadosAtualizados[campo],
+            }
+          : {
+              // Para outras abas: incluir dados cadastrais
+              nome: colaborador.nome,
+              funcao: colaborador.funcao,
+              filial: colaborador.filial,
+              matricula: colaborador.matricula,
+              ent1: historicoColaborador?.ent1 || null,
+              sai1: historicoColaborador?.sai1 || null,
+              ent2: historicoColaborador?.ent2 || null,
+              sai2: historicoColaborador?.sai2 || null,
+              ent3: historicoColaborador?.ent3 || null,
+              sai3: historicoColaborador?.sai3 || null,
+              ent4: historicoColaborador?.ent4 || null,
+              sai4: historicoColaborador?.sai4 || null,
+              ent5: historicoColaborador?.ent5 || null,
+              sai5: historicoColaborador?.sai5 || null,
+              [campo]: dadosAtualizados[campo],
+            };
 
     // Salvar no histórico APENAS (não salvar na tabela principal)
     // A tabela colaboradores é apenas cadastral, não tem relação com datas
@@ -2309,7 +2352,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
       colaboradorId,
       dataFiltro.value,
       dadosHistorico,
-      abaFilial.value
+      abaFilial.value,
     );
 
     console.log("📦 Resultado do salvarHistorico:", resultado);
@@ -2325,18 +2368,18 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     console.log("✅ Histórico salvo com sucesso!");
 
-    // Atualizar valor local imediatamente
+    // Atualizar valor local ANTES de cancelar edição
     colaborador[campo] = dadosAtualizados[campo];
 
-    // Cancelar edição primeiro
+    // Aguardar próximo tick do DOM para garantir que o valor foi atualizado
+    await nextTick();
+
+    // Cancelar edição após atualização do valor
     cancelarEdicaoCelula();
 
     // Mostrar feedback de sucesso (silencioso se apagar)
     if (dadosAtualizados[campo]) {
-      notifySuccess(
-        "Sucesso",
-        "Horário salvo com sucesso"
-      );
+      notifySuccess("Sucesso", "Horário salvo com sucesso");
     }
   } catch (err) {
     console.error("❌ Erro ao salvar célula:", err);
@@ -2345,17 +2388,17 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     if (err.message?.includes("colaboradores_historico")) {
       notifyError(
         "Erro de banco de dados",
-        "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase."
+        "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase.",
       );
     } else if (err.message?.includes("origem")) {
       notifyError(
         "Erro de banco de dados",
-        "Coluna 'origem' não encontrada. Execute o script SQL para adicionar a coluna."
+        "Coluna 'origem' não encontrada. Execute o script SQL para adicionar a coluna.",
       );
     } else {
       notifyError(
         "Erro ao salvar",
-        err.message || "Erro desconhecido ao salvar horário"
+        err.message || "Erro desconhecido ao salvar horário",
       );
     }
   } finally {
@@ -2424,7 +2467,7 @@ const salvarColaborador = async (id) => {
           hoje.getDate(),
           horasComCompensacao,
           parseInt(minutos),
-          0
+          0,
         );
 
         console.log(`📅 Hora original: ${horas}:${minutos}`);
@@ -2546,7 +2589,7 @@ const exportarExcel = async () => {
         "Saída 4": formatarHora(colaborador.sai4),
         "Entrada 5": formatarHora(colaborador.ent5),
         "Saída 5": formatarHora(colaborador.sai5),
-      })
+      }),
     );
 
     // Criar planilha
@@ -2561,14 +2604,14 @@ const exportarExcel = async () => {
     mostrarNotificacao(
       "Exportação Concluída",
       `Arquivo Excel exportado com sucesso! (colaboradores_${hoje}.xlsx)`,
-      "success"
+      "success",
     );
   } catch (err) {
     console.error("Erro ao exportar Excel:", err);
     mostrarNotificacao(
       "Erro na Exportação",
       `Erro ao exportar arquivo Excel. ${err?.message || "Tente novamente."}`,
-      "error"
+      "error",
     );
   } finally {
     exportandoExcel.value = false;
@@ -2681,14 +2724,14 @@ const exportarPDF = async () => {
     mostrarNotificacao(
       "Exportação Concluída",
       `Arquivo PDF exportado com sucesso! (colaboradores_${dataFormatada}.pdf)`,
-      "success"
+      "success",
     );
   } catch (err) {
     console.error("Erro ao exportar PDF:", err);
     mostrarNotificacao(
       "Erro na Exportação",
       `Erro ao exportar arquivo PDF: ${err.message}. Tente novamente.`,
-      "error"
+      "error",
     );
   } finally {
     exportandoPDF.value = false;
@@ -2725,14 +2768,14 @@ const carregarDadosPorData = async (data) => {
       if (errorHistorico) {
         console.error(
           "Erro ao buscar históricos transportadoras:",
-          errorHistorico
+          errorHistorico,
         );
       }
 
       console.log(
         `✅ ${
           historicos?.length || 0
-        } históricos de transportadoras encontrados`
+        } históricos de transportadoras encontrados`,
       );
 
       // 3. Para transportadoras: mostrar SOMENTE o histórico da data
@@ -2765,7 +2808,7 @@ const carregarDadosPorData = async (data) => {
       // 4. Adicionar linhas vazias
       const linhasVazias = Math.max(
         0,
-        numLinhasTransportadoras - transportadorasMescladas.length
+        numLinhasTransportadoras - transportadorasMescladas.length,
       );
 
       linhasTransportadoras.value = [
@@ -2803,7 +2846,7 @@ const carregarDadosPorData = async (data) => {
       colaboradoresStoreAtivo.value.length === 0
     ) {
       console.warn(
-        `⚠️ Nenhum colaborador encontrado para a aba: ${abaFilial.value}`
+        `⚠️ Nenhum colaborador encontrado para a aba: ${abaFilial.value}`,
       );
       colaboradores.value = [];
       errorMensagem.value = null;
@@ -2814,7 +2857,7 @@ const carregarDadosPorData = async (data) => {
     // 2. Buscar históricos da data selecionada para a aba ativa
     const { historicos, error: errorHistorico } = await buscarHistoricosPorData(
       data,
-      abaFilial.value
+      abaFilial.value,
     );
 
     if (errorHistorico) {
@@ -2831,7 +2874,7 @@ const carregarDadosPorData = async (data) => {
     ) {
       colaboradores.value = mesclarColaboradoresComHistorico(
         colaboradoresStoreAtivo.value,
-        historicos
+        historicos,
       );
     }
 
@@ -2851,7 +2894,7 @@ const carregarDadosPorData = async (data) => {
     mostrarNotificacao(
       "Erro ao Carregar",
       "Erro ao carregar dados da data selecionada. Tente novamente.",
-      "error"
+      "error",
     );
   } finally {
     carregandoDados.value = false;
@@ -2862,26 +2905,28 @@ const carregarDadosPorData = async (data) => {
 const aguardarSupabase = async () => {
   let attempts = 0;
   const maxAttempts = 50; // 5 segundos no máximo
-  
+
   while (attempts < maxAttempts) {
     try {
       const supabase = useSupabaseClient();
-      
+
       // Verificar se o cliente está disponível
       if (supabase && supabase.auth) {
-        console.log('✅ Cliente Supabase inicializado - pode carregar dados');
+        console.log("✅ Cliente Supabase inicializado - pode carregar dados");
         return true;
       }
     } catch (error) {
-      console.log(`⏳ Aguardando inicialização do Supabase... (${attempts + 1}/${maxAttempts})`);
+      console.log(
+        `⏳ Aguardando inicialização do Supabase... (${attempts + 1}/${maxAttempts})`,
+      );
     }
-    
+
     // Esperar 100ms antes da próxima tentativa
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     attempts++;
   }
-  
-  console.error('❌ Timeout: Cliente Supabase não foi inicializado');
+
+  console.error("❌ Timeout: Cliente Supabase não foi inicializado");
   return false;
 };
 
@@ -2890,9 +2935,9 @@ onMounted(async () => {
   try {
     // Aguardar inicialização do Supabase
     const supabaseReady = await aguardarSupabase();
-    
+
     if (!supabaseReady) {
-      errorMensagem.value = 'Sistema não está pronto. Recarregue a página.';
+      errorMensagem.value = "Sistema não está pronto. Recarregue a página.";
       return;
     }
 
