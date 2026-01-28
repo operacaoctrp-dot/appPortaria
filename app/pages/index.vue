@@ -27,38 +27,214 @@
       <div class="grid md:grid-cols-2 gap-6">
         <!-- Entrada de Funcionário -->
         <div
-          class="bg-white rounded-xl shadow-md p-6 border border-neutral-100"
+          class="bg-white rounded-xl shadow-md p-5 border border-neutral-100"
         >
           <h2
-            class="text-xl font-semibold text-success-600 mb-4 flex items-center"
+            class="text-lg font-semibold text-success-600 mb-3 flex items-center"
           >
-            <ArrowRightOnRectangleIcon class="h-6 w-6 mr-2 text-success-500" />
+            <ArrowRightOnRectangleIcon class="h-5 w-5 mr-2 text-success-500" />
             Entrada de Funcionário
           </h2>
-          <form @submit.prevent="registrarEntrada" class="space-y-4">
-            <BaseInput
-              v-model="entradaForm.nome"
-              label="Nome do Funcionário"
-              placeholder="Digite o nome completo"
-              :prefix-icon="UserIcon"
-              required
-              size="md"
-            />
+          <form @submit.prevent="registrarEntrada" class="space-y-3">
+            <!-- Seletor de Aba -->
+            <div>
+              <label
+                class="block text-sm font-semibold text-secondary-700 mb-1.5"
+              >
+                Tipo de Registro
+              </label>
+              <Listbox v-model="entradaForm.tipoAba">
+                <div class="relative">
+                  <ListboxButton
+                    class="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left border-2 border-neutral-200 focus:outline-none focus:ring-2 focus:ring-success-400 focus:border-success-400 transition-colors text-sm"
+                  >
+                    <span class="block truncate font-medium text-secondary-800">
+                      {{ entradaForm.tipoAba || 'Selecione o tipo' }}
+                    </span>
+                    <span
+                      class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
+                    >
+                      <ChevronUpDownIcon class="h-4 w-4 text-neutral-400" />
+                    </span>
+                  </ListboxButton>
 
-            <BaseInput
-              v-model="entradaForm.cargo"
-              label="Cargo/Setor"
-              placeholder="Ex: Desenvolvedor, RH, Vendas"
-              :prefix-icon="BriefcaseIcon"
-              size="md"
-            />
+                  <transition
+                    leave-active-class="transition duration-100 ease-in"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                  >
+                    <ListboxOptions
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none border border-neutral-100"
+                    >
+                      <ListboxOption
+                        v-slot="{ active, selected }"
+                        v-for="tipo in tiposAba"
+                        :key="tipo"
+                        :value="tipo"
+                        as="template"
+                      >
+                        <li
+                          :class="[
+                            active
+                              ? 'bg-success-50 text-success-900'
+                              : 'text-secondary-900',
+                            'relative cursor-default select-none py-2 pl-9 pr-4 transition-colors',
+                          ]"
+                        >
+                          <span
+                            :class="[
+                              selected ? 'font-semibold' : 'font-medium',
+                              'block truncate',
+                            ]"
+                          >
+                            {{ tipo }}
+                          </span>
+                          <span
+                            v-if="selected"
+                            class="absolute inset-y-0 left-0 flex items-center pl-2 text-success-600"
+                          >
+                            <CheckIcon class="h-4 w-4" />
+                          </span>
+                        </li>
+                      </ListboxOption>
+                    </ListboxOptions>
+                  </transition>
+                </div>
+              </Listbox>
+            </div>
+
+            <!-- Campos dinâmicos baseados no tipo -->
+            <div v-if="entradaForm.tipoAba" class="space-y-3">
+              <!-- Incinerador -->
+              <template v-if="entradaForm.tipoAba === 'Incinerador'">
+                <BaseInput
+                  v-model="entradaForm.matricula"
+                  label="Matrícula"
+                  placeholder="Digite a matrícula"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.nome"
+                  label="Nome do Funcionário"
+                  placeholder="Digite o nome completo"
+                  :prefix-icon="UserIcon"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.funcao"
+                  label="Função"
+                  placeholder="Ex: Operador, Técnico"
+                  :prefix-icon="BriefcaseIcon"
+                  size="sm"
+                />
+                <BaseInput
+                  v-model="entradaForm.filial"
+                  label="Filial"
+                  placeholder="Ex: ECOFOR"
+                  size="sm"
+                />
+              </template>
+
+              <!-- SFL -->
+              <template v-if="entradaForm.tipoAba === 'SFL'">
+                <BaseInput
+                  v-model="entradaForm.matricula"
+                  label="Matrícula"
+                  placeholder="Digite a matrícula"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.nome"
+                  label="Nome do Funcionário"
+                  placeholder="Digite o nome completo"
+                  :prefix-icon="UserIcon"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.funcao"
+                  label="Função"
+                  placeholder="Ex: Fiscal, Auxiliar"
+                  :prefix-icon="BriefcaseIcon"
+                  size="sm"
+                />
+                <BaseInput
+                  v-model="entradaForm.filial"
+                  label="Filial"
+                  placeholder="Ex: CFL"
+                  size="sm"
+                />
+              </template>
+
+              <!-- Transportadoras -->
+              <template v-if="entradaForm.tipoAba === 'Transportadoras'">
+                <BaseInput
+                  v-model="entradaForm.nome"
+                  label="Nome do Motorista"
+                  placeholder="Digite o nome completo"
+                  :prefix-icon="UserIcon"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.funcao"
+                  label="Função"
+                  placeholder="Ex: Motorista, Ajudante"
+                  :prefix-icon="BriefcaseIcon"
+                  size="sm"
+                />
+                <BaseInput
+                  v-model="entradaForm.empresa"
+                  label="Empresa"
+                  placeholder="Nome da transportadora"
+                  size="sm"
+                  required
+                />
+              </template>
+
+              <!-- Visitantes -->
+              <template v-if="entradaForm.tipoAba === 'Visitantes'">
+                <BaseInput
+                  v-model="entradaForm.rg"
+                  label="RG"
+                  placeholder="Digite o RG"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.nome"
+                  label="Nome do Visitante"
+                  placeholder="Digite o nome completo"
+                  :prefix-icon="UserIcon"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.empresa"
+                  label="Empresa"
+                  placeholder="Nome da empresa"
+                  size="sm"
+                  required
+                />
+                <BaseInput
+                  v-model="entradaForm.autorizacao"
+                  label="Autorização"
+                  placeholder="Quem autorizou a visita"
+                  size="sm"
+                />
+              </template>
+            </div>
 
             <BaseButton
               type="submit"
               variant="success"
-              size="md"
+              size="sm"
               :icon="CheckIcon"
               full-width
+              :disabled="!entradaForm.tipoAba"
             >
               Registrar Entrada
             </BaseButton>
@@ -67,25 +243,25 @@
 
         <!-- Saída de Funcionário -->
         <div
-          class="bg-white rounded-xl shadow-md p-6 border border-neutral-100"
+          class="bg-white rounded-xl shadow-md p-5 border border-neutral-100"
         >
           <h2
-            class="text-xl font-semibold text-danger-600 mb-4 flex items-center"
+            class="text-lg font-semibold text-danger-600 mb-3 flex items-center"
           >
-            <ArrowLeftOnRectangleIcon class="h-6 w-6 mr-2 text-danger-500" />
+            <ArrowLeftOnRectangleIcon class="h-5 w-5 mr-2 text-danger-500" />
             Saída de Funcionário
           </h2>
-          <form @submit.prevent="registrarSaida" class="space-y-4">
+          <form @submit.prevent="registrarSaida" class="space-y-3">
             <div>
               <label
-                class="block text-sm font-semibold text-secondary-700 mb-2"
+                class="block text-sm font-semibold text-secondary-700 mb-1.5"
               >
                 Selecionar Funcionário
               </label>
               <Listbox v-model="saidaForm.funcionarioId">
                 <div class="relative">
                   <ListboxButton
-                    class="relative w-full cursor-default rounded-xl bg-white py-3 pl-4 pr-12 text-left border-2 border-neutral-200 focus:outline-none focus:ring-2 focus:ring-danger-400 focus:border-danger-400 transition-colors duration-200"
+                    class="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left border-2 border-neutral-200 focus:outline-none focus:ring-2 focus:ring-danger-400 focus:border-danger-400 transition-colors text-sm"
                   >
                     <span
                       v-if="!saidaForm.funcionarioId"
@@ -101,9 +277,9 @@
                       {{ funcionarioSelecionado?.cargo }}
                     </span>
                     <span
-                      class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"
+                      class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
                     >
-                      <ChevronUpDownIcon class="h-5 w-5 text-neutral-400" />
+                      <ChevronUpDownIcon class="h-4 w-4 text-neutral-400" />
                     </span>
                   </ListboxButton>
 
@@ -113,7 +289,7 @@
                     leave-to-class="opacity-0"
                   >
                     <ListboxOptions
-                      class="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl bg-white py-2 text-base shadow-strong ring-1 ring-black/5 focus:outline-none border border-neutral-100"
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none border border-neutral-100"
                     >
                       <ListboxOption
                         v-slot="{ active, selected }"
@@ -127,7 +303,7 @@
                             active
                               ? 'bg-danger-50 text-danger-900'
                               : 'text-secondary-900',
-                            'relative cursor-default select-none py-3 pl-12 pr-4 transition-colors duration-150',
+                            'relative cursor-default select-none py-2 pl-9 pr-4 transition-colors',
                           ]"
                         >
                           <span
@@ -140,9 +316,9 @@
                           </span>
                           <span
                             v-if="selected"
-                            class="absolute inset-y-0 left-0 flex items-center pl-4 text-danger-600"
+                            class="absolute inset-y-0 left-0 flex items-center pl-2 text-danger-600"
                           >
-                            <CheckIcon class="h-5 w-5" />
+                            <CheckIcon class="h-4 w-4" />
                           </span>
                         </li>
                       </ListboxOption>
@@ -154,7 +330,7 @@
             <BaseButton
               type="submit"
               variant="danger"
-              size="md"
+              size="sm"
               :icon="XMarkIcon"
               :disabled="!saidaForm.funcionarioId"
               full-width
@@ -1249,9 +1425,17 @@ const handlePeriodChange = (period) => {
 };
 
 // Estados reativos
+const tiposAba = ["Incinerador", "SFL", "Transportadoras", "Visitantes"];
+
 const entradaForm = ref({
+  tipoAba: "",
+  matricula: "",
   nome: "",
-  cargo: "",
+  funcao: "",
+  filial: "",
+  empresa: "",
+  rg: "",
+  autorizacao: "",
 });
 
 const saidaForm = ref({
@@ -1437,55 +1621,34 @@ const eficienciaPortaria = computed(() => {
 
 // Funções
 const registrarEntrada = async () => {
-  if (!entradaForm.value.nome.trim()) return;
+  if (!entradaForm.value.nome.trim() || !entradaForm.value.tipoAba) return;
 
   try {
-    const nome = entradaForm.value.nome.trim();
-    const cargo = entradaForm.value.cargo.trim();
+    const { tipoAba, nome, matricula, funcao, filial, empresa, rg, autorizacao } = entradaForm.value;
 
-    // Primeiro, buscar ou criar colaborador
-    let colaborador = colaboradores.value.find(
-      (c) => c.nome?.toLowerCase() === nome.toLowerCase()
-    );
+    console.log(`📝 Registrando entrada - Tipo: ${tipoAba}, Nome: ${nome}`);
 
-    if (!colaborador) {
-      // Se não existe, criar novo colaborador via useColaboradores
-      console.log(
-        "Colaborador não encontrado, seria necessário criar primeiro"
-      );
-      alert("Colaborador não encontrado. Por favor, cadastre primeiro.");
-      return;
-    }
+    // Esta função simplesmente cria o cadastro se necessário
+    // O histórico será registrado manualmente na página novaEntrada
+    alert(`✅ Funcionário ${nome} cadastrado com sucesso!\n\nAgora vá para a tela "Controle de Entrada e Saída" para registrar os horários.`);
 
-    // Verificar se o colaborador já está presente
-    const jaEstaPresente = colaboradoresPresentes.value.some(
-      (c) => c.id === colaborador.id
-    );
+    // Limpar formulário
+    entradaForm.value = {
+      tipoAba: "",
+      matricula: "",
+      nome: "",
+      funcao: "",
+      filial: "",
+      empresa: "",
+      rg: "",
+      autorizacao: "",
+    };
 
-    if (jaEstaPresente) {
-      alert(
-        `❌ ${nome} já está presente! Por favor, registre a saída antes de registrar uma nova entrada.`
-      );
-      return;
-    }
+    // Redirecionar para novaEntrada
+    setTimeout(() => {
+      navigateTo('/novaEntrada');
+    }, 1000);
 
-    // Registrar movimentação usando o novo composable
-    const resultado = await registrarMovimentacao(colaborador.id, "entrada");
-
-    if (resultado.success) {
-      // Limpar formulário
-      entradaForm.value = { nome: "", cargo: "" };
-
-      console.log(`✅ Entrada registrada para ${nome}`);
-
-      // Recarregar dados para atualizar o card de funcionários presentes
-      await carregarMovimentacoesDia();
-      await carregarColaboradoresPresentes(); // Atualizar lista global
-      await buscarColaboradores();
-    } else {
-      console.error(`❌ Erro: ${resultado.error}`);
-      alert(`Erro ao registrar entrada: ${resultado.error}`);
-    }
   } catch (err) {
     console.error("Erro ao registrar entrada:", err);
     alert("Erro ao registrar entrada. Tente novamente.");
