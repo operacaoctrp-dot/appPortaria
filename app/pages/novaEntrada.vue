@@ -2082,6 +2082,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     colaboradorId,
     campo,
     salvandoCelula: salvandoCelula.value,
+    abaAtiva: abaFilial.value,
   });
 
   if (salvandoCelula.value) {
@@ -2106,8 +2107,18 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
           : colaboradores.value.find((c) => c.id === colaboradorId);
 
     console.log("👤 Colaborador encontrado:", colaborador ? "SIM" : "NÃO");
+    console.log("👤 Dados do colaborador:", colaborador);
+    
     if (!colaborador) {
+      console.error("❌ Colaborador não encontrado. ID:", colaboradorId);
+      console.error("📋 Lista de colaboradores:", colaboradores.value);
       throw new Error("Colaborador não encontrado");
+    }
+
+    // Validar se o colaborador tem um ID válido (não temporário para abas normais)
+    if (!colaboradorId || colaboradorId === null || colaboradorId === undefined) {
+      console.error("❌ ID do colaborador inválido:", colaboradorId);
+      throw new Error("ID do colaborador inválido");
     }
 
     // Validar horário se fornecido
