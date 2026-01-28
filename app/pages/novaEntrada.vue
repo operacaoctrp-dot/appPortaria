@@ -2108,7 +2108,7 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
 
     console.log("👤 Colaborador encontrado:", colaborador ? "SIM" : "NÃO");
     console.log("👤 Dados do colaborador:", colaborador);
-    
+
     if (!colaborador) {
       console.error("❌ Colaborador não encontrado. ID:", colaboradorId);
       console.error("📋 Lista de colaboradores:", colaboradores.value);
@@ -2116,7 +2116,11 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
     }
 
     // Validar se o colaborador tem um ID válido (não temporário para abas normais)
-    if (!colaboradorId || colaboradorId === null || colaboradorId === undefined) {
+    if (
+      !colaboradorId ||
+      colaboradorId === null ||
+      colaboradorId === undefined
+    ) {
       console.error("❌ ID do colaborador inválido:", colaboradorId);
       throw new Error("ID do colaborador inválido");
     }
@@ -2374,8 +2378,13 @@ const salvarEdicaoCelula = async (colaboradorId, campo) => {
   } catch (err) {
     console.error("❌ Erro ao salvar célula:", err);
 
-    // Verificar se é erro de tabela não existente
-    if (err.message?.includes("colaboradores_historico")) {
+    // Verificar se é erro de constraint de foreign key
+    if (err.message?.includes("fk_colaborador") || err.code === "23503") {
+      notifyError(
+        "Erro de banco de dados",
+        "Constraint de foreign key impedindo o salvamento. Execute o script database/remover_fk_colaborador_historico.sql no Supabase para corrigir.",
+      );
+    } else if (err.message?.includes("colaboradores_historico")) {
       notifyError(
         "Erro de banco de dados",
         "Tabela de histórico não encontrada. Execute o script database/create_historico_table.sql no Supabase.",
